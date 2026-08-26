@@ -133,17 +133,17 @@ const authenticateToken = (req, res, next) => {
 // E-mail és Cron feladatok
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
+  port: 587,
+  secure: false, // 587-es portnál ez kötelezően false (STARTTLS-t használ)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  connectionTimeout: 10000 // 10 másodperc várakozási idő
 });
-
 const getAdminEmails = async () => {
   const adminRes = await db.query("SELECT email FROM users WHERE is_admin = true OR id = 1");
   return adminRes.rows.map(row => row.email).filter(Boolean);
