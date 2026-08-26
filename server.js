@@ -132,10 +132,15 @@ const authenticateToken = (req, res, next) => {
 
 // E-mail és Cron feladatok
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
+  },
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
