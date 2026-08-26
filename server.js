@@ -134,16 +134,17 @@ const authenticateToken = (req, res, next) => {
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // 587-es portnál ez kötelezően false (STARTTLS-t használ)
+  secure: false,
+  family: 4, // Ez kényszeríti az IPv4 használatát (megoldja az ENETUNREACH hibát)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
   },
   tls: {
     rejectUnauthorized: false
-  },
-  connectionTimeout: 10000 // 10 másodperc várakozási idő
+  }
 });
+
 const getAdminEmails = async () => {
   const adminRes = await db.query("SELECT email FROM users WHERE is_admin = true OR id = 1");
   return adminRes.rows.map(row => row.email).filter(Boolean);
