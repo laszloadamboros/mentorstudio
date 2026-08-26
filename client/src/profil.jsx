@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const API_BASE = 'http://localhost:5000/api';
-const UPLOADS_BASE = 'http://localhost:5000';
+const API_BASE = 'https://mentorstudio-backend.onrender.com/api';
+const UPLOADS_BASE = 'https://mentorstudio-backend.onrender.com';
 
 export default function Profile() {
   const [formData, setFormData] = useState({ full_name: '', email: '', phone: '', avatar_url: '' });

@@ -9,8 +9,8 @@ import {
 import Profile from './profil';
 import ScheduleView from './ScheduleView';
 
-const API_BASE = 'http://localhost:5000/api';
-const UPLOADS_BASE = 'http://localhost:5000';
+const API_BASE = 'https://mentorstudio-backend.onrender.com/api';
+const UPLOADS_BASE = 'https://mentorstudio-backend.onrender.com';
 
 const formatLessonTime = (startTime, endTime) => {
   if (!startTime || !endTime) return '';

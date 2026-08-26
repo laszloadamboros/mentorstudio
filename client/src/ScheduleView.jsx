@@ -84,7 +84,7 @@ export default function ScheduleView({ lessons: propsLessons = [], user, token, 
 
       if (token) {
         try {
-          let url = 'http://localhost:5000/api/schedule';
+          let url = 'https://mentorstudio-backend.onrender.com/api/schedule';
           if ((user?.is_admin || user?.id === 1) && selectedTeacherId) {
             url += `?teacher_id=${selectedTeacherId}`;
           }
