@@ -132,22 +132,28 @@ const authenticateToken = (req, res, next) => {
 };
 
 // Nodemailer beállítás
+const dns = require('dns');
+
+// Kikényszerítjük az IPv4 preferenciát a Node.js egész folyamatára
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true,
-  connectionTimeout: 10000, // 10 másodperc timeout helyett több időt adunk
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
+  secure: true, // SSL használata
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
   },
-  lookup: (hostname, options, callback) => {
-    require('dns').lookup(hostname, { family: 4 }, callback);
-  },
   tls: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    // Ezzel a opcióval tiltjuk le az IPv6 kényszerítést a socket szinten
+    servername: 'smtp.gmail.com'
   }
 });
 
