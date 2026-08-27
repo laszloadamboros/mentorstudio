@@ -135,10 +135,16 @@ const authenticateToken = (req, res, next) => {
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 465,
-  secure: true, // 465-ös port esetén true
+  secure: true,
+  connectionTimeout: 10000, // 10 másodperc timeout helyett több időt adunk
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
+  },
+  lookup: (hostname, options, callback) => {
+    require('dns').lookup(hostname, { family: 4 }, callback);
   },
   tls: {
     rejectUnauthorized: false
