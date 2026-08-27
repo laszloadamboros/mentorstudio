@@ -15,7 +15,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
 
-// Middleware-ek (Csak egyszer hívjuk meg a CORS-t és a JSON értelmezőt)
+// Middleware-ek
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -47,7 +47,7 @@ const db = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// Segédfunkció az óradíj dinamikus kiszámításához (50 perc vs 100 perc)
+// Óradíj kiszámítása
 const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -62,7 +62,7 @@ const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
   return diffMinutes <= 60 ? r50 : r100;
 };
 
-// Adatbázis sémák automatikus bővítése
+// Adatbázis sémák automatikus frissítése
 const initDb = async () => {
   try {
     await db.query(`
@@ -118,7 +118,7 @@ const initDb = async () => {
 };
 initDb();
 
-// JWT autentikációs middleware
+// JWT middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -131,12 +131,12 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// E-mail és Cron feladatok
+// Nodemailer beállítás
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
   secure: false,
-  family: 4, // Ez kényszeríti az IPv4 használatát (megoldja az ENETUNREACH hibát)
+  family: 4,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
@@ -147,8 +147,13 @@ const transporter = nodemailer.createTransport({
 });
 
 const getAdminEmails = async () => {
-  const adminRes = await db.query("SELECT email FROM users WHERE is_admin = true OR id = 1");
-  return adminRes.rows.map(row => row.email).filter(Boolean);
+  try {
+    const adminRes = await db.query("SELECT email FROM users WHERE is_admin = true OR id = 1");
+    return adminRes.rows.map(row => row.email).filter(Boolean);
+  } catch (e) {
+    console.error("Hiba az admin e-mailek lekérésekor:", e);
+    return [];
+  }
 };
 
 const sendWeeklyUnpaidReport = async () => {
@@ -495,6 +500,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     res.json({ message: 'Visszaállító link elküldve a megadott e-mail címre!' });
   } catch (err) {
+    console.error('Elfelejtett jelszó hiba:', err);
     res.status(500).json({ error: 'Hiba a jelszóvisszaállítási folyamatban' });
   }
 });
@@ -878,7 +884,7 @@ app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// ÓRA LÉTREHOZÁSA (POST /api/teacher/lessons) - E-MAIL ÉRTESÍTŐVEL KIEGÉSZÍTVE
+// Óra létrehozása + e-mail értesítés
 app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   const { student_id, subject, start_time, end_time, topic, notes } = req.body;
   try {
@@ -892,7 +898,7 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
 
     const newLesson = result.rows[0];
 
-    // --- E-MAIL ÉRTESÍTÉSEK KÜLDÉSE (Diák, Tanár, Admin) ---
+    // E-mail küldés
     try {
       const studentRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [student_id]);
       const teacherRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [req.user.id]);
@@ -925,6 +931,7 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
             <p><strong>Megjegyzés:</strong> ${notes || 'Nincs'}</p>
           `
         });
+        console.log('Óra értesítő e-mail sikeresen kiküldve!');
       }
     } catch (emailErr) {
       console.error('Hiba az órafelvételi e-mail küldésekor:', emailErr);
@@ -1200,6 +1207,8 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Hiba az ügyviteli napló adatok lekérésekor' });
   }
 });
+
+// Dummy endpointok a frontend hibamentes logolásához
 app.post('/api/report-feature-flag', (req, res) => {
   res.status(200).json({ success: true });
 });
@@ -1207,6 +1216,7 @@ app.post('/api/report-feature-flag', (req, res) => {
 app.all('/api/logs/request-log', (req, res) => {
   res.status(200).json({ success: true });
 });
+
 app.listen(PORT, () => {
   console.log(`Szerver fut a http://localhost:${PORT} porton`);
 });
