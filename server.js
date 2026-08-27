@@ -43,7 +43,8 @@ const upload = multer({ storage });
 
 // Adatbázis kapcsolat
 const db = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/magantanar_db'
+  connectionString: process.env.DATABASE_URL || 'postgres://postgres:password@localhost:5432/magantanar_db',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 // Segédfunkció az óradíj dinamikus kiszámításához (50 perc vs 100 perc)
@@ -478,7 +479,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       WHERE email = $3
     `, [resetToken, resetExpires, email]);
 
-    const resetLink = `http://localhost:3000/?token=${resetToken}`;
+    const resetLink = `https://mentorstudio-7ngc.vercel.app/?token=${resetToken}`;
 
     await transporter.sendMail({
       from: `"MentorStúdió" <${process.env.EMAIL_USER}>`,
@@ -877,6 +878,7 @@ app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// ÓRA LÉTREHOZÁSA (POST /api/teacher/lessons) - E-MAIL ÉRTESÍTŐVEL KIEGÉSZÍTVE
 app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   const { student_id, subject, start_time, end_time, topic, notes } = req.body;
   try {
@@ -888,8 +890,49 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
       RETURNING *
     `, [req.user.id, student_id, subject, start_time, end_time, topic || '', notes || '']);
 
-    res.json(result.rows[0]);
+    const newLesson = result.rows[0];
+
+    // --- E-MAIL ÉRTESÍTÉSEK KÜLDÉSE (Diák, Tanár, Admin) ---
+    try {
+      const studentRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [student_id]);
+      const teacherRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [req.user.id]);
+      const adminEmails = await getAdminEmails();
+
+      const student = studentRes.rows[0];
+      const teacher = teacherRes.rows[0];
+
+      const recipients = Array.from(new Set([
+        student?.email,
+        teacher?.email,
+        ...adminEmails
+      ])).filter(Boolean);
+
+      if (recipients.length > 0) {
+        const formattedStart = new Date(start_time).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
+        const formattedEnd = new Date(end_time).toLocaleTimeString('hu-HU', { timeStyle: 'short' });
+
+        await transporter.sendMail({
+          from: `"MentorStúdió Rendszer" <${process.env.EMAIL_USER}>`,
+          to: recipients.join(','),
+          subject: `📅 Új óra rögzítve: ${subject}`,
+          html: `
+            <h2>Új óra került rögzítésre a MentorStúdióban!</h2>
+            <p><strong>Oktató:</strong> ${teacher ? teacher.full_name : 'Ismeretlen'}</p>
+            <p><strong>Diák:</strong> ${student ? student.full_name : 'Ismeretlen'}</p>
+            <p><strong>Tantárgy:</strong> ${subject}</p>
+            <p><strong>Időpont:</strong> ${formattedStart} - ${formattedEnd}</p>
+            <p><strong>Témakör:</strong> ${topic || 'Nincs megadva'}</p>
+            <p><strong>Megjegyzés:</strong> ${notes || 'Nincs'}</p>
+          `
+        });
+      }
+    } catch (emailErr) {
+      console.error('Hiba az órafelvételi e-mail küldésekor:', emailErr);
+    }
+
+    res.json(newLesson);
   } catch (err) {
+    console.error('Hiba az óra létrehozásakor:', err);
     res.status(500).json({ error: 'Hiba az óra létrehozásakor' });
   }
 });
@@ -1029,9 +1072,6 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
     }
 
-    // Minden (összes idejű) órát lekérünk egyben - ebből számoljuk ki
-    // az időszaki ÉS a göngyölített (cumulative) statisztikákat is,
-    // hogy ne kelljen több, egymásnak ellentmondó lekérdezést futtatni.
     const allLessonsRes = await db.query(`
       SELECT
         l.id,
@@ -1063,10 +1103,8 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       in_period: new Date(l.start_time) >= startDate && new Date(l.start_time) < endDate
     }));
 
-    // Az időszaki (kiválasztott hét/hónap) részletes óralista
     const lessonsWithPrices = allLessons.filter(l => l.in_period);
 
-    // Összesítők (bevétel, fizetési módok szerinti bontás)
     let period_revenue = 0, cumulative_revenue = 0;
     let period_cash = 0, period_transfer = 0, period_settled = 0;
     let total_cash = 0, total_transfer = 0, total_unpaid = 0;
@@ -1082,7 +1120,6 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       const isPaid = l.is_paid || isCash || isTransfer;
       const isUnpaid = !isPaid && !isSettled;
 
-      // --- Tanári statisztika ---
       if (l.teacher_id) {
         if (!teacherMap[l.teacher_id]) {
           teacherMap[l.teacher_id] = {
@@ -1101,7 +1138,6 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
         }
       }
 
-      // --- Diák statisztika ---
       if (l.student_id) {
         if (!studentMap[l.student_id]) {
           studentMap[l.student_id] = {
@@ -1122,7 +1158,6 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
         }
       }
 
-      // --- Mentorstúdió szintű pénzügyi összesítő ---
       if (isCash) {
         total_cash += price;
         if (l.in_period) period_cash += price;
@@ -1136,7 +1171,6 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
         period_settled += price;
       }
 
-      // A "generált forgalom" (settled órák nélkül, mert azok jutalékmentesnek/külön rendezettnek számítanak)
       if (!isSettled && isPaid) {
         cumulative_revenue += price;
         if (l.in_period) period_revenue += price;
