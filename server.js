@@ -657,6 +657,61 @@ app.post('/api/applications', authenticateToken, async (req, res) => {
   }
 });
 
+// Órarend lekérése diákoknak és tanároknak egyaránt
+app.get('/api/schedule', authenticateToken, async (req, res) => {
+  try {
+    let query = '';
+    let params = [];
+
+    if (req.user.role === 'teacher') {
+      const { teacher_id } = req.query;
+      let targetTeacherId = req.user.id;
+
+      if ((req.user.is_admin || req.user.id === 1) && teacher_id) {
+        targetTeacherId = teacher_id;
+      }
+
+      query = `
+        SELECT l.*, s.full_name AS student_name, s.email AS student_email,
+               t.full_name AS teacher_name, t.hourly_rate_50, t.hourly_rate_100, t.is_admin
+        FROM lessons l
+        LEFT JOIN users s ON l.student_id = s.id
+        LEFT JOIN users t ON l.teacher_id = t.id
+      `;
+
+      if (!(req.user.is_admin || req.user.id === 1) || teacher_id) {
+        query += ` WHERE l.teacher_id = $1`;
+        params.push(targetTeacherId);
+      }
+      query += ` ORDER BY l.start_time ASC`;
+
+    } else {
+      // Diák szerepkör esetén a saját óráit adja vissza
+      query = `
+        SELECT l.*, t.full_name AS teacher_name, t.email AS teacher_email, t.phone AS teacher_phone
+        FROM lessons l
+        LEFT JOIN users t ON l.teacher_id = t.id
+        WHERE l.student_id = $1
+        ORDER BY l.start_time ASC
+      `;
+      params.push(req.user.id);
+    }
+
+    const result = await db.query(query, params);
+    
+    // Ár kiszámítása tanárok esetén
+    const lessons = result.rows.map(l => ({
+      ...l,
+      calculated_price: l.hourly_rate_50 ? calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin) : undefined
+    }));
+
+    res.json(lessons);
+  } catch (err) {
+    console.error('Hiba az órarend lekérésekor:', err);
+    res.status(500).json({ error: 'Hiba az órarend adatok lekérésekor' });
+  }
+});
+
 app.get('/api/teachers', authenticateToken, async (req, res) => {
   try {
     const result = await db.query("SELECT id, full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, is_admin FROM users WHERE role = 'teacher' ORDER BY full_name ASC");
