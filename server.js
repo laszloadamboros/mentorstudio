@@ -1200,7 +1200,13 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Hiba az ügyviteli napló adatok lekérésekor' });
   }
 });
+app.post('/api/report-feature-flag', (req, res) => {
+  res.status(200).json({ success: true });
+});
 
+app.all('/api/logs/request-log', (req, res) => {
+  res.status(200).json({ success: true });
+});
 app.listen(PORT, () => {
   console.log(`Szerver fut a http://localhost:${PORT} porton`);
 });
