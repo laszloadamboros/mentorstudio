@@ -8,12 +8,16 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 const cron = require('node-cron');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
+
+// Resend e-mail kliens inicializálása
+// Resend e-mail kliens inicializálása (az API kulcs közvetlen átadásával)
+const resend = new Resend(process.env.RESEND_API_KEY || 're_Vbrk8CUh_6dwjQFyo3V9ZqwqJV7ycmoUD');
 
 // Middleware-ek
 app.use(cors({
@@ -130,32 +134,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-// Nodemailer beállítás
-const dns = require('dns');
-
-// Kikényszerítjük az IPv4 preferenciát a Node.js egész folyamatára
-if (dns.setDefaultResultOrder) {
-  dns.setDefaultResultOrder('ipv4first');
-}
-
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // SSL használata
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
-  },
-  tls: {
-    rejectUnauthorized: false,
-    // Ezzel a opcióval tiltjuk le az IPv6 kényszerítést a socket szinten
-    servername: 'smtp.gmail.com'
-  }
-});
 
 const getAdminEmails = async () => {
   try {
@@ -365,9 +343,9 @@ const sendWeeklyUnpaidReport = async () => {
         `;
       }
 
-      await transporter.sendMail({
-        from: `"MentorStúdió Rendszer" <${process.env.EMAIL_USER}>`,
-        to: adminEmails.join(','),
+      await resend.emails.send({
+        from: 'MentorStúdió Rendszer <onboarding@resend.dev>',
+        to: adminEmails,
         subject: '📊 Heti fizetési, jutalék és forgalmi kimutatás (Admin)',
         html: `
           <h2>Heti Összefoglaló Jelentés</h2>
@@ -497,9 +475,9 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     const resetLink = `https://mentorstudio-7ngc.vercel.app/?token=${resetToken}`;
 
-    await transporter.sendMail({
-      from: `"MentorStúdió" <${process.env.EMAIL_USER}>`,
-      to: email,
+    await resend.emails.send({
+      from: 'MentorStúdió <onboarding@resend.dev>',
+      to: [email],
       subject: '🔑 Jelszó visszaállítási kérelem',
       html: `
         <h3>Kedves Felhasználó!</h3>
@@ -950,7 +928,7 @@ app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Óra létrehozása + e-mail értesítés
+// Óra létrehozása + e-mail értesítés Resend segítségével
 app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   const { student_id, subject, start_time, end_time, topic, notes } = req.body;
   try {
@@ -964,7 +942,7 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
 
     const newLesson = result.rows[0];
 
-    // E-mail küldés
+    // E-mail küldés HTTP API alapon
     try {
       const studentRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [student_id]);
       const teacherRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [req.user.id]);
@@ -983,9 +961,9 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
         const formattedStart = new Date(start_time).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
         const formattedEnd = new Date(end_time).toLocaleTimeString('hu-HU', { timeStyle: 'short' });
 
-        await transporter.sendMail({
-          from: `"MentorStúdió Rendszer" <${process.env.EMAIL_USER}>`,
-          to: recipients.join(','),
+        await resend.emails.send({
+          from: 'MentorStúdió Rendszer <onboarding@resend.dev>',
+          to: recipients,
           subject: `📅 Új óra rögzítve: ${subject}`,
           html: `
             <h2>Új óra került rögzítésre a MentorStúdióban!</h2>
@@ -1027,9 +1005,9 @@ app.delete('/api/teacher/lessons/:id', authenticateToken, async (req, res) => {
 
     if (lesson.student_email) {
       const dateStr = new Date(lesson.start_time).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
-      transporter.sendMail({
-        from: `"MentorStúdió Rendszer" <${process.env.EMAIL_USER}>`,
-        to: lesson.student_email,
+      resend.emails.send({
+        from: 'MentorStúdió Rendszer <onboarding@resend.dev>',
+        to: [lesson.student_email],
         subject: '❌ Óra lemondás értesítő',
         html: `
           <h3>Kedves ${lesson.student_name}!</h3>
