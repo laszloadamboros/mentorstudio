@@ -1334,29 +1334,33 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
 
     const { period_type, month, week, teacher_id } = req.query;
 
-    let startDate;
-    let endDate;
+    let startDate, endDate;
 
     if (period_type === 'week' && week) {
       const parts = week.split('-W');
       const year = parseInt(parts[0]);
       const weekNum = parseInt(parts[1]);
       
-      const simple = new Date(year, 0, 1 + (weekNum - 1) * 7);
-      const dow = simple.getDay();
+      const simple = new Date(Date.UTC(year, 0, 1 + (weekNum - 1) * 7));
+      const dow = simple.getUTCDay();
       const ISOweekStart = simple;
-      if (dow <= 4)
-        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+      if (dow <= 4 && dow !== 0)
+        ISOweekStart.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
+      else if (dow === 0)
+        ISOweekStart.setUTCDate(simple.getUTCDate() - 6);
       else
-        ISOweekStart.setDate(simple.getDate() + (8 - simple.getDay()));
+        ISOweekStart.setUTCDate(simple.getUTCDate() + (8 - simple.getUTCDay()));
       
       startDate = new Date(ISOweekStart);
+      startDate.setUTCHours(0, 0, 0, 0);
       endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 7);
+      endDate.setUTCDate(endDate.getUTCDate() + 7);
+      endDate.setUTCHours(23, 59, 59, 999);
     } else {
       const selectedMonth = month || new Date().toISOString().slice(0, 7);
-      startDate = new Date(`${selectedMonth}-01T00:00:00`);
-      endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+      const [y, m] = selectedMonth.split('-').map(Number);
+      startDate = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
+      endDate = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
     }
 
     const allLessonsRes = await db.query(`
@@ -1391,12 +1395,15 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       const calculatedPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
       const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
 
+      const lessonDate = new Date(l.start_time);
+      const inPeriod = lessonDate >= startDate && lessonDate <= endDate;
+
       return {
         ...l,
         calculated_price: calculatedPrice,
         admin_cut: adminCut,
         admin_share: adminCut,
-        in_period: new Date(l.start_time) >= startDate && new Date(l.start_time) < endDate
+        in_period: inPeriod
       };
     });
 
@@ -1509,6 +1516,8 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       admin_own_revenue,
       admin_commission_from_non_admins,
       total_admin_earnings,
+      admin_cut: total_admin_earnings,
+      admin_jutalek: total_admin_earnings,
       teachers_stats,
       students_stats
     });
