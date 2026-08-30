@@ -50,7 +50,7 @@ const db = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// Óradíj kiszámítása - Javítva: Ha meg van adva egyedi érték, az jelenik meg!
+// Óradíj kiszámítása
 const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -62,7 +62,7 @@ const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
   return diffMinutes <= 60 ? r50 : r100;
 };
 
-// Admin jutalék (Kornya cut) számítása órahossz alapján (50 perc <= 60: 1500 Ft, 100 perc > 60: 2000 Ft)
+// Admin jutalék számítása
 const calculateAdminCut = (startTime, endTime) => {
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -104,6 +104,15 @@ const initDb = async () => {
         address VARCHAR(255) DEFAULT 'Budapest, Fő utca 1.',
         team_image_url VARCHAR(500),
         logo_url VARCHAR(500)
+      );
+
+      CREATE TABLE IF NOT EXISTS about_us (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        image_url VARCHAR(500),
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -614,21 +623,30 @@ app.get('/api/about-us', authenticateToken, async (req, res) => {
   }
 });
 
+// Javított Névjegy / Bemutatkozó létrehozás endpoint
 app.post('/api/about-us', authenticateToken, upload.single('image'), async (req, res) => {
   try {
-    if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Nincs jogosultságod' });
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ error: 'Nincs jogosultságod névjegy létrehozására' });
+    }
+
     const { name, description } = req.body;
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'A név megadása kötelező' });
+    }
+
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const result = await db.query(`
       INSERT INTO about_us (name, description, image_url, created_by)
       VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [name, description, imageUrl, req.user.id]);
+    `, [name, description || '', imageUrl, req.user.id]);
 
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Hiba a bemutatkozó létrehozásakor' });
+    console.error('Hiba a névjegy létrehozásakor:', err);
+    res.status(500).json({ error: 'Hiba a névjegy létrehozásakor: ' + err.message });
   }
 });
 
@@ -659,7 +677,6 @@ app.post('/api/applications', authenticateToken, async (req, res) => {
   }
 });
 
-// Órarend lekérése diákoknak és tanároknak egyaránt
 app.get('/api/schedule', authenticateToken, async (req, res) => {
   try {
     let query = '';
@@ -922,7 +939,6 @@ app.get('/api/teacher/students', authenticateToken, async (req, res) => {
   }
 });
 
-// Diák létrehozása - Javítva: class_name és school visszatérése a válaszban
 app.post('/api/teacher/students', authenticateToken, async (req, res) => {
   const { full_name, email, password, phone, notes, school, class_name } = req.body;
   try {
@@ -941,7 +957,6 @@ app.post('/api/teacher/students', authenticateToken, async (req, res) => {
   }
 });
 
-// Diák szerkesztése API ENDPOINT (iskola és osztály támogatásával)
 app.put('/api/teacher/students/:id', authenticateToken, async (req, res) => {
   const { full_name, email, phone, notes, school, class_name, password } = req.body;
   try {
@@ -1006,7 +1021,6 @@ app.post('/api/teacher/teachers', authenticateToken, async (req, res) => {
   }
 });
 
-// Tanár szerkesztése API ENDPOINT
 app.put('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   const { full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, is_admin, password } = req.body;
   try {
@@ -1055,7 +1069,6 @@ app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Óra létrehozása - Javítva: Megőrizzük az eredetileg bejelölt helyi időpontokat az időeltolódások elkerülésére
 app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   const { student_id, subject, start_time, end_time, topic, notes, is_recurring } = req.body;
   try {
@@ -1151,7 +1164,6 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   }
 });
 
-// Óra frissítése
 app.put('/api/teacher/lessons/:id', authenticateToken, async (req, res) => {
   const { topic, notes, custom_price } = req.body;
   try {
@@ -1225,14 +1237,12 @@ app.patch('/api/teacher/lessons/:id/paid', authenticateToken, async (req, res) =
   }
 });
 
-// BESZÉLGETÉSEK LEKÉRÉSE: Korlátozva, hogy a diákok kizárólag TANÁR vagy ADMIN felhasználókkal cseveghessenek!
 app.get('/api/conversations', authenticateToken, async (req, res) => {
   try {
     let query = '';
     let params = [req.user.id];
 
     if (req.user.role === 'student') {
-      // Diák esetén csak a tanárokat és az adminokat kérjük le
       query = `
         SELECT DISTINCT u.id, u.full_name, u.email, u.role
         FROM users u
@@ -1240,7 +1250,6 @@ app.get('/api/conversations', authenticateToken, async (req, res) => {
         ORDER BY u.full_name ASC
       `;
     } else {
-      // Tanárok és adminok az összes többi felhasználóval cseveghetnek
       query = `
         SELECT DISTINCT u.id, u.full_name, u.email, u.role
         FROM users u
@@ -1270,11 +1279,9 @@ app.get('/api/messages/:userId', authenticateToken, async (req, res) => {
   }
 });
 
-// ÜZENET KÜLDÉSE: Backend védelem diákoknak
 app.post('/api/messages', authenticateToken, upload.single('file'), async (req, res) => {
   const { receiver_id, content } = req.body;
   try {
-    // Ha a küldő diák, ellenőrizzük, hogy a címzett tanár-e vagy admin-e
     if (req.user.role === 'student') {
       const receiverRes = await db.query('SELECT role, is_admin, id FROM users WHERE id = $1', [receiver_id]);
       if (receiverRes.rows.length === 0) {
@@ -1489,7 +1496,6 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
   }
 });
 
-// Dummy endpointok a frontend hibamentes logolásához
 app.post('/api/report-feature-flag', (req, res) => {
   res.status(200).json({ success: true });
 });
