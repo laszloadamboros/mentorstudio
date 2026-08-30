@@ -922,6 +922,7 @@ app.get('/api/teacher/students', authenticateToken, async (req, res) => {
   }
 });
 
+// Diák létrehozása - Javítva: class_name és school visszatérése a válaszban
 app.post('/api/teacher/students', authenticateToken, async (req, res) => {
   const { full_name, email, password, phone, notes, school, class_name } = req.body;
   try {
@@ -1054,7 +1055,7 @@ app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Óra létrehozása + Ismétlődő tanóra támogatása + e-mail értesítés Resend segítségével
+// Óra létrehozása - Javítva: Megőrizzük az eredetileg bejelölt helyi időpontokat az időeltolódások elkerülésére
 app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   const { student_id, subject, start_time, end_time, topic, notes, is_recurring } = req.body;
   try {
@@ -1071,17 +1072,19 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
 
       while (currentStart.getFullYear() === targetYear) {
         lessonsToInsert.push({
-          start: new Date(currentStart).toISOString(),
-          end: new Date(currentEnd).toISOString()
+          start: currentStart,
+          end: currentEnd
         });
 
+        currentStart = new Date(currentStart);
         currentStart.setDate(currentStart.getDate() + 7);
+        currentEnd = new Date(currentEnd);
         currentEnd.setDate(currentEnd.getDate() + 7);
       }
     } else {
       lessonsToInsert.push({
-        start: baseStart.toISOString(),
-        end: baseEnd.toISOString()
+        start: start_time,
+        end: end_time
       });
     }
 
