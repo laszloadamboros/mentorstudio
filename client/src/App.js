@@ -2050,13 +2050,18 @@ export default function App() {
                         >
                           {m.content && <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{m.content}</p>}
                           {fileUrl && (
-                            <div style={{ marginTop: m.content ? '0.5rem' : 0 }}>
-                              <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#a7f3d0', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
-                                <Paperclip size={14}/> Melléklet megtekintése / Letöltés
+                            <div style={{ marginTop: '0.5rem' }}>
+                              <a 
+                                href={fileUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                style={{ color: isMe ? '#e2e8f0' : '#34d399', textDecoration: 'underline', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                              >
+                                <Paperclip size={14} /> {m.file_name || 'Csatolt fájl letöltése'}
                               </a>
                             </div>
                           )}
-                          <span style={{ fontSize: '0.65rem', opacity: 0.7, marginTop: '0.3rem', display: 'block', textAlign: 'right' }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', marginTop: '0.4rem', opacity: 0.8, textAlign: 'right' }}>
                             {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -2064,16 +2069,8 @@ export default function App() {
                     })}
                   </div>
 
-                  <form onSubmit={handleSendMessage} style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Írj üzenetet..." 
-                      value={newMessage} 
-                      onChange={e => setNewMessage(e.target.value)} 
-                      style={{ ...ui.input, flex: 1 }} 
-                    />
-                    
-                    <label style={{ cursor: 'pointer', padding: '0.7rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Fájl csatolása">
+                  <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
+                    <label style={{ cursor: 'pointer', padding: '0.6rem', background: 'rgba(52, 211, 153, 0.15)', borderRadius: '8px', color: '#34d399', display: 'flex', alignItems: 'center' }}>
                       <Paperclip size={18} />
                       <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
                     </label>
@@ -2084,14 +2081,22 @@ export default function App() {
                       </span>
                     )}
 
-                    <button type="submit" style={{ ...ui.primaryBtn, width: 'auto', padding: '0.7rem 1.2rem' }} className="btn-hover">
-                      <Send size={18} />
+                    <input 
+                      type="text" 
+                      placeholder="Írj egy üzenetet..." 
+                      value={newMessage} 
+                      onChange={e => setNewMessage(e.target.value)} 
+                      style={{ ...ui.input, flex: 1 }} 
+                    />
+
+                    <button type="submit" style={{ ...ui.primaryBtnInline, padding: '0.7rem 1.2rem' }} className="btn-hover">
+                      <Send size={16} /> Küldés
                     </button>
                   </form>
                 </>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
-                  Válassz ki egy beszélgetést a bal oldali listából.
+                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                  Válassz ki egy beszélgetést a bal oldali sávból.
                 </div>
               )}
             </div>
@@ -2099,9 +2104,8 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} setUser={setUser} token={token} />
+          <Profile user={user} token={token} API_BASE={API_BASE} onUserUpdate={(updatedUser) => setUser(updatedUser)} />
         )}
-
       </main>
     </div>
   );
