@@ -1864,8 +1864,7 @@ export default function App() {
         {user?.role === 'teacher' && activeTab === 'earnings' && (
           <div style={ui.glassCard} className="fade-in-up">
             <h3 style={ui.sectionTitle}>
-              <Calculator size={22} color="#34d399"/> Óradíj & Kereset Kimutatás
-              <h3 style={{ ...ui.sectionTitle, margin: 0 }}><FileSpreadsheet size={22} color="#34d399"/> Óradíj & Kereset Kimutatás</h3>
+              <h3 style={{ ...ui.sectionTitle, margin: 0 }}><FileSpreadsheet size={22} color="#34d399"/> Adminisztrátori Napló & Kimutatások</h3>
               <button onClick={() => window.print()} style={ui.primaryBtnInline} className="btn-hover"><Printer size={16}/> Nyomtatás / PDF</button>
             </h3>
             <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
