@@ -4,7 +4,7 @@ import {
   Plus, Trash2, GraduationCap, Sparkles, ChevronRight, UserPlus, ShieldCheck,
   Megaphone, Pin, MessageSquare, Send, Search, CheckCircle2, AlertCircle, FileText,
   Users, CreditCard, KeyRound, ArrowLeft, Paperclip, Download, LogIn, MapPin, Layout,
-  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit
+  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat
 } from 'lucide-react';
 import Profile from './profil';
 import ScheduleView from './ScheduleView';
@@ -191,7 +191,18 @@ export default function App() {
     hourly_rate_100: 9000, 
     is_admin: false 
   });
-  const [newLesson, setNewLesson] = useState({ student_id: '', subject: 'Matematika', start_time: '', end_time: '', topic: '', notes: '' });
+  
+  const [newLesson, setNewLesson] = useState({ 
+    student_id: '', 
+    subject: 'Matematika', 
+    start_time: '', 
+    end_time: '', 
+    topic: '', 
+    notes: '',
+    is_recurring: false,
+    repeat_weeks: 4
+  });
+  
   const [subjectSearch, setSubjectSearch] = useState('');
 
   const [conversations, setConversations] = useState([]);
@@ -622,7 +633,7 @@ export default function App() {
         body: JSON.stringify(newLesson)
       });
       if (!res.ok) throw new Error('Hiba az óra létrehozásakor');
-      setNewLesson({ student_id: '', subject: 'Matematika', start_time: '', end_time: '', topic: '', notes: '' });
+      setNewLesson({ student_id: '', subject: 'Matematika', start_time: '', end_time: '', topic: '', notes: '', is_recurring: false, repeat_weeks: 4 });
       fetchTeacherData();
     } catch (err) { alert(err.message); }
   };
@@ -1480,6 +1491,39 @@ export default function App() {
                   ></textarea>
                 </div>
 
+                {/* Ismétlődő óra beállítása */}
+                <div style={{ background: 'rgba(5, 15, 10, 0.5)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(52, 211, 153, 0.2)', marginTop: '0.5rem' }}>
+                  <label style={ui.checkboxLabel}>
+                    <input 
+                      type="checkbox" 
+                      checked={newLesson.is_recurring} 
+                      onChange={e => setNewLesson({...newLesson, is_recurring: e.target.checked})} 
+                      style={ui.checkbox} 
+                    />
+                    <span style={{ fontWeight: '700', color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Repeat size={16} /> Ismétlődő óra generálása (Hetente ugyanebben az időpontban)
+                    </span>
+                  </label>
+
+                  {newLesson.is_recurring && (
+                    <div style={{ ...ui.inputGroup, marginTop: '0.8rem' }}>
+                      <label style={ui.label}>ISMÉTLŐDÉSEK SZÁMA (HETEK SZÁMA)</label>
+                      <input 
+                        type="number" 
+                        min="1" 
+                        max="52" 
+                        value={newLesson.repeat_weeks} 
+                        onChange={e => setNewLesson({...newLesson, repeat_weeks: parseInt(e.target.value) || 1})} 
+                        style={{ ...ui.input, maxWidth: '200px' }} 
+                        required 
+                      />
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                        A megadott kezdési időponttól kezdve heti rendszerességgel jönnek létre az alkalmak.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
                 <button type="submit" style={ui.primaryBtn} className="btn-hover"><Plus size={18}/> Óra Kiírása</button>
               </form>
             </div>
@@ -1609,11 +1653,11 @@ export default function App() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
-                    <label style={ui.label}>ÓRABÉR - 50 PERC (FT)</label>
+                    <label style={ui.label}>ÓRADÍJ - 50 PERC (FT)</label>
                     <input type="number" step="500" placeholder="5000" value={newTeacher.hourly_rate_50} onChange={e => setNewTeacher({...newTeacher, hourly_rate_50: parseInt(e.target.value) || 0})} style={ui.input} required />
                   </div>
                   <div style={ui.inputGroup}>
-                    <label style={ui.label}>ÓRABÉR - 100 PERC (FT)</label>
+                    <label style={ui.label}>ÓRADÍJ - 100 PERC (FT)</label>
                     <input type="number" step="500" placeholder="9000" value={newTeacher.hourly_rate_100} onChange={e => setNewTeacher({...newTeacher, hourly_rate_100: parseInt(e.target.value) || 0})} style={ui.input} required />
                   </div>
                 </div>
@@ -1727,7 +1771,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 1. Kinek mikor volt órája (Részletes Óralista Táblázat) */}
+              {/* 1. Kinek mikor volt órája */}
               <div style={{ marginBottom: '2.5rem' }}>
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Clock size={18}/> Órák részletes időrendi naplója (Időszak)
@@ -1782,8 +1826,8 @@ export default function App() {
                     <thead>
                       <tr>
                         <th style={ui.th}>Tanár Neve</th>
-                        <th style={ui.th}>50p Órabér</th>
-                        <th style={ui.th}>100p Órabér</th>
+                        <th style={ui.th}>50p ÓRADÍJ</th>
+                        <th style={ui.th}>100p ÓRADÍJ</th>
                         <th style={ui.th}>Időszaki Óraszám</th>
                         <th style={ui.th}>Göngyölített (Összes) Óra</th>
                         <th style={ui.th}>Időszaki Generált Forgalom</th>
@@ -1844,14 +1888,14 @@ export default function App() {
                             <td style={ui.td}>{s.total_lessons} óra</td>
                             <td style={{ ...ui.td, color: '#60a5fa', fontWeight: '700' }}>{(s.total_paid || 0).toLocaleString('hu-HU')} Ft</td>
                           </tr>
-                         ))
-                        ) : null}   
+                        ))
+                      ) : null}   
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* 4. Teljes Mentorstúdió Forgalma (Göngyölített és Időszaki részletező) */}
+              {/* 4. Teljes Mentorstúdió Forgalma */}
               <div style={{ marginBottom: '2.5rem' }}>
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <BarChart3 size={18}/> Mentorstúdió Pénzügyi Összesítője
@@ -1903,7 +1947,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 5. Órák kezelése és fizetési státuszok állítása (A HIÁNYZÓ KÁRTYÁS NÉZET) */}
+              {/* 5. Órák kezelése és fizetési státuszok állítása */}
               <div className="no-print">
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <CheckSquare size={18}/> Időszaki Órák Kezelése & Fizetési Státuszok Állítása
@@ -2029,12 +2073,16 @@ export default function App() {
                       style={{ ...ui.input, flex: 1 }} 
                     />
                     
-                    <label style={{ cursor: 'pointer', padding: '0.7rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)' }} title="Fájl csatolása">
+                    <label style={{ cursor: 'pointer', padding: '0.7rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', color: '#34d399', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Fájl csatolása">
                       <Paperclip size={18} />
                       <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
                     </label>
 
-                    {selectedFile && <span style={{ fontSize: '0.75rem', color: '#34d399', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedFile.name}</span>}
+                    {selectedFile && (
+                      <span style={{ fontSize: '0.75rem', color: '#34d399', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {selectedFile.name}
+                      </span>
+                    )}
 
                     <button type="submit" style={{ ...ui.primaryBtn, width: 'auto', padding: '0.7rem 1.2rem' }} className="btn-hover">
                       <Send size={18} />
@@ -2043,7 +2091,7 @@ export default function App() {
                 </>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
-                  <p>Válassz ki egy beszélgetést a bal oldali sávból.</p>
+                  Válassz ki egy beszélgetést a bal oldali listából.
                 </div>
               )}
             </div>
@@ -2051,7 +2099,7 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} onUserUpdate={(updated) => setUser(updated)} />
+          <Profile user={user} setUser={setUser} token={token} />
         )}
 
       </main>

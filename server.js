@@ -16,7 +16,6 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
 
 // Resend e-mail kliens inicializálása
-// Resend e-mail kliens inicializálása (az API kulcs közvetlen átadásával)
 const resend = new Resend(process.env.RESEND_API_KEY || 're_Vbrk8CUh_6dwjQFyo3V9ZqwqJV7ycmoUD');
 
 // Middleware-ek
@@ -79,7 +78,8 @@ const initDb = async () => {
       ALTER TABLE lessons 
       ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'unpaid',
       ADD COLUMN IF NOT EXISTS notes TEXT,
-      ADD COLUMN IF NOT EXISTS topic TEXT;
+      ADD COLUMN IF NOT EXISTS topic TEXT,
+      ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT false;
 
       ALTER TABLE messages 
       ADD COLUMN IF NOT EXISTS file_url VARCHAR(500),
@@ -675,7 +675,6 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
       query += ` ORDER BY l.start_time ASC`;
 
     } else {
-      // Diák szerepkör esetén a saját óráit adja vissza
       query = `
         SELECT l.*, t.full_name AS teacher_name, t.email AS teacher_email, t.phone AS teacher_phone
         FROM lessons l
@@ -688,7 +687,6 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
 
     const result = await db.query(query, params);
     
-    // Ár kiszámítása tanárok esetén
     const lessons = result.rows.map(l => ({
       ...l,
       calculated_price: l.hourly_rate_50 ? calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin) : undefined
@@ -928,19 +926,51 @@ app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Óra létrehozása + e-mail értesítés Resend segítségével
+// Óra létrehozása + Ismétlődő tanóra támogatása + e-mail értesítés Resend segítségével
 app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
-  const { student_id, subject, start_time, end_time, topic, notes } = req.body;
+  const { student_id, subject, start_time, end_time, topic, notes, is_recurring } = req.body;
   try {
     if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Nincs jogosultságod' });
 
-    const result = await db.query(`
-      INSERT INTO lessons (teacher_id, student_id, subject, start_time, end_time, topic, notes, payment_status, is_paid)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'unpaid', false)
-      RETURNING *
-    `, [req.user.id, student_id, subject, start_time, end_time, topic || '', notes || '']);
+    let lessonsToInsert = [];
+    const baseStart = new Date(start_time);
+    const baseEnd = new Date(end_time);
 
-    const newLesson = result.rows[0];
+    if (is_recurring) {
+      // Ha ismétlődő, legeneráljuk az adott év végéig minden azonos napra/időpontra
+      const targetYear = baseStart.getFullYear();
+      let currentStart = new Date(baseStart);
+      let currentEnd = new Date(baseEnd);
+
+      while (currentStart.getFullYear() === targetYear) {
+        lessonsToInsert.push({
+          start: new Date(currentStart).toISOString(),
+          end: new Date(currentEnd).toISOString()
+        });
+
+        // 7 napot adunk hozzá a következő héthez
+        currentStart.setDate(currentStart.getDate() + 7);
+        currentEnd.setDate(currentEnd.getDate() + 7);
+      }
+    } else {
+      lessonsToInsert.push({
+        start: baseStart.toISOString(),
+        end: baseEnd.toISOString()
+      });
+    }
+
+    const insertedLessons = [];
+    for (const item of lessonsToInsert) {
+      const result = await db.query(`
+        INSERT INTO lessons (teacher_id, student_id, subject, start_time, end_time, topic, notes, payment_status, is_paid, is_recurring)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'unpaid', false, $8)
+        RETURNING *
+      `, [req.user.id, student_id, subject, item.start, item.end, topic || '', notes || '', Boolean(is_recurring)]);
+
+      insertedLessons.push(result.rows[0]);
+    }
+
+    const firstLesson = insertedLessons[0];
 
     // E-mail küldés HTTP API alapon
     try {
@@ -961,16 +991,21 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
         const formattedStart = new Date(start_time).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' });
         const formattedEnd = new Date(end_time).toLocaleTimeString('hu-HU', { timeStyle: 'short' });
 
+        const recurringNote = is_recurring 
+          ? `<p style="color: #10b981;"><strong>🔄 Ez egy ismétlődő tanóra, amely az év végéig minden héten ezen az időponton automatikusan be lett ütemezve!</strong></p>` 
+          : '';
+
         await resend.emails.send({
           from: 'MentorStúdió Rendszer <onboarding@resend.dev>',
           to: recipients,
-          subject: `📅 Új óra rögzítve: ${subject}`,
+          subject: `📅 Új óra rögzítve: ${subject}${is_recurring ? ' (Ismétlődő)' : ''}`,
           html: `
             <h2>Új óra került rögzítésre a MentorStúdióban!</h2>
+            ${recurringNote}
             <p><strong>Oktató:</strong> ${teacher ? teacher.full_name : 'Ismeretlen'}</p>
             <p><strong>Diák:</strong> ${student ? student.full_name : 'Ismeretlen'}</p>
             <p><strong>Tantárgy:</strong> ${subject}</p>
-            <p><strong>Időpont:</strong> ${formattedStart} - ${formattedEnd}</p>
+            <p><strong>Kezdő Időpont:</strong> ${formattedStart} - ${formattedEnd}</p>
             <p><strong>Témakör:</strong> ${topic || 'Nincs megadva'}</p>
             <p><strong>Megjegyzés:</strong> ${notes || 'Nincs'}</p>
           `
@@ -981,7 +1016,7 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
       console.error('Hiba az órafelvételi e-mail küldésekor:', emailErr);
     }
 
-    res.json(newLesson);
+    res.json(firstLesson);
   } catch (err) {
     console.error('Hiba az óra létrehozásakor:', err);
     res.status(500).json({ error: 'Hiba az óra létrehozásakor' });
@@ -1135,6 +1170,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
         l.notes,
         l.payment_status,
         l.is_paid,
+        l.is_recurring,
         t.full_name AS teacher_name,
         t.hourly_rate_50,
         t.hourly_rate_100,
