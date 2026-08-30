@@ -876,7 +876,7 @@ export default function App() {
     let count50 = 0;
     let count100 = 0;
 
-    const isAdminOwner = user?.email === 'kornya.kms@gmail.com';
+    const isAdminUser = user?.email === 'kornya.kms@gmail.com';
 
     const lessonList = filteredLessons.map(l => {
       const start = new Date(l.start_time);
@@ -886,12 +886,21 @@ export default function App() {
       const price = l.calculated_price || l.custom_price || 0;
       let commission = 0;
 
-      if (durationMins >= 80) {
-        count100++;
-        commission = isAdminOwner ? 0 : 2000;
+      if (isAdminUser) {
+        commission = 0;
+        if (durationMins >= 80) {
+          count100++;
+        } else {
+          count50++;
+        }
       } else {
-        count50++;
-        commission = isAdminOwner ? 0 : 1500;
+        if (durationMins >= 80) {
+          commission = 2000;
+          count100++;
+        } else {
+          commission = 1500;
+          count50++;
+        }
       }
 
       totalGross += price;
@@ -2139,13 +2148,13 @@ export default function App() {
             <h3 style={ui.sectionTitle}>Regisztrált Tanárok Rendszerben</h3>
             <div style={ui.gridGap}>
               {teachers.length === 0 ? (
-                <p style={ui.emptyText}>Még nincsenek regisztrált tanárok.</p>
+                <p style={ui.emptyText}>Nincsenek tanárok rögzítve.</p>
               ) : (
                 teachers.map(t => (
                   <div key={t.id} style={ui.glassCard} className="card-hover">
                     {editingTeacherId === t.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                        <h4 style={{ color: '#34d399', margin: 0 }}>Tanár Szerkesztése (#{t.id})</h4>
+                        <h4 style={{ color: '#34d399', margin: 0 }}>Tanár Adatainak Szerkesztése (#{t.id})</h4>
                         
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                           <div style={ui.inputGroup}>
@@ -2173,7 +2182,7 @@ export default function App() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                           <div style={ui.inputGroup}>
-                            <label style={ui.label}>TELEFONSZÁM</label>
+                            <label style={ui.label}>TELEFON</label>
                             <input 
                               type="text" 
                               value={editTeacherData.phone} 
@@ -2183,7 +2192,7 @@ export default function App() {
                           </div>
 
                           <div style={ui.inputGroup}>
-                            <label style={ui.label}>FŐ TANTÁRGY</label>
+                            <label style={ui.label}>TANTÁRGY</label>
                             <input 
                               type="text" 
                               value={editTeacherData.subject} 
@@ -2195,17 +2204,14 @@ export default function App() {
 
                           <div style={ui.inputGroup}>
                             <label style={ui.label}>ADMIN JOG</label>
-                            <div style={{ marginTop: '0.4rem' }}>
-                              <label style={ui.checkboxLabel}>
-                                <input 
-                                  type="checkbox" 
-                                  checked={editTeacherData.is_admin} 
-                                  onChange={e => setEditTeacherData({ ...editTeacherData, is_admin: e.target.checked })} 
-                                  style={ui.checkbox} 
-                                />
-                                <span>Adminisztrátor</span>
-                              </label>
-                            </div>
+                            <select 
+                              value={editTeacherData.is_admin ? 'true' : 'false'} 
+                              onChange={e => setEditTeacherData({ ...editTeacherData, is_admin: e.target.value === 'true' })} 
+                              style={ui.input}
+                            >
+                              <option value="false">Nem Admin</option>
+                              <option value="true">Adminisztrátor</option>
+                            </select>
                           </div>
                         </div>
 
@@ -2217,7 +2223,6 @@ export default function App() {
                               value={editTeacherData.hourly_rate_50} 
                               onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_50: parseInt(e.target.value) || 0 })} 
                               style={ui.input} 
-                              required 
                             />
                           </div>
 
@@ -2228,13 +2233,12 @@ export default function App() {
                               value={editTeacherData.hourly_rate_100} 
                               onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0 })} 
                               style={ui.input} 
-                              required 
                             />
                           </div>
                         </div>
 
                         <div style={ui.inputGroup}>
-                          <label style={ui.label}>BEMUTATKOZÓ BIO</label>
+                          <label style={ui.label}>BIO</label>
                           <textarea 
                             value={editTeacherData.bio} 
                             onChange={e => setEditTeacherData({ ...editTeacherData, bio: e.target.value })} 
@@ -2252,18 +2256,15 @@ export default function App() {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <h4 style={ui.cardTitle}>{t.full_name}</h4>
-                            {Boolean(t.is_admin) && <span style={{ ...ui.badge, background: 'rgba(234, 179, 8, 0.2)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.4)' }}>ADMIN</span>}
+                            {Boolean(t.is_admin) && <span style={ui.roleTag}>ADMIN</span>}
                           </div>
-                          <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{t.email} | {t.phone || 'Nincs telefon'}</p>
-                          <p style={{ color: '#34d399', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                            <strong>Szak:</strong> {t.subject || 'Nincs megadva'} | <strong>50p:</strong> {t.hourly_rate_50 || 5000} Ft | <strong>100p:</strong> {t.hourly_rate_100 || 9000} Ft
-                          </p>
+                          <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{t.email} | {t.phone || 'Nincs tel'}</p>
+                          <p style={{ color: '#34d399', fontSize: '0.85rem', marginTop: '0.2rem' }}>Szak: <strong>{t.subject || 'Nincs megadva'}</strong></p>
+                          <p style={{ color: '#cbd5e1', fontSize: '0.8rem', marginTop: '0.2rem' }}>50p: {t.hourly_rate_50} Ft | 100p: {t.hourly_rate_100} Ft</p>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div>
                           <button onClick={() => handleStartEditTeacher(t)} style={ui.editBtn} className="btn-hover"><Edit size={16}/></button>
-                          {user?.id !== t.id && (
-                            <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
-                          )}
+                          <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
                         </div>
                       </div>
                     )}
@@ -2275,242 +2276,229 @@ export default function App() {
         )}
 
         {(user?.is_admin || user?.id === 1) && activeTab === 'log' && (
-          <div id="printable-log-section" style={ui.glassCard} className="fade-in-up">
-            <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <h3 style={ui.sectionTitle}><FileSpreadsheet size={22} color="#34d399"/> Adminisztrátori Napló & Statisztika</h3>
-              <button onClick={() => window.print()} style={ui.secondaryBtnInline} className="btn-hover">
-                <Printer size={16}/> Nyomtatás / PDF Mentés
-              </button>
-            </div>
-
-            <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem', background: 'rgba(5, 15, 10, 0.5)', padding: '1rem', borderRadius: '12px' }}>
-              <div style={ui.inputGroup}>
-                <label style={ui.label}>IDŐSZAK SZŰRŐ</label>
-                <select value={logPeriodMode} onChange={e => setLogPeriodMode(e.target.value)} style={ui.input}>
-                  <option value="week">Heti bontás</option>
-                  <option value="month">Havi bontás</option>
-                </select>
+          <div>
+            <div style={ui.glassCard} className="fade-in-up">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+                <h3 style={ui.sectionTitle}><FileSpreadsheet size={20} color="#34d399"/> Rendszer Napló & Pénzügyi Statisztika</h3>
+                <button onClick={() => window.print()} style={ui.secondaryBtnInline} className="no-print btn-hover">
+                  <Printer size={16}/> Nyomtatás / PDF Export
+                </button>
               </div>
 
-              {logPeriodMode === 'month' ? (
+              <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', background: 'rgba(5, 15, 10, 0.5)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
                 <div style={ui.inputGroup}>
-                  <label style={ui.label}>HÓNAP</label>
-                  <input type="month" value={logSelectedMonth} onChange={e => setLogSelectedMonth(e.target.value)} style={ui.input} />
-                </div>
-              ) : (
-                <div style={ui.inputGroup}>
-                  <label style={ui.label}>HÉT</label>
-                  <input type="week" value={logSelectedWeek} onChange={e => setLogSelectedWeek(e.target.value)} style={ui.input} />
-                </div>
-              )}
-            </div>
-
-            {logData && (
-              <div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                  <div style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '1rem', borderRadius: '12px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#a7f3d0', fontWeight: '700' }}>ÖSSZES MEG TARTOTT ÓRA</span>
-                    <h3 style={{ fontSize: '1.8rem', margin: '0.3rem 0 0 0', color: '#fff' }}>{logData.summary?.total_lessons || 0} db</h3>
-                  </div>
-
-                  <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1rem', borderRadius: '12px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#93c5fd', fontWeight: '700' }}>BEFOLYT BRUTTÓ DIÁKDÍJ</span>
-                    <h3 style={{ fontSize: '1.8rem', margin: '0.3rem 0 0 0', color: '#fff' }}>{(logData.summary?.total_gross_income || 0).toLocaleString('hu-HU')} Ft</h3>
-                  </div>
-
-                  <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)', padding: '1rem', borderRadius: '12px' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#fde047', fontWeight: '700' }}>ADMIN BEVÉTEL (1500/2000 FT)</span>
-                    <h3 style={{ fontSize: '1.8rem', margin: '0.3rem 0 0 0', color: '#facc15' }}>{(logData.summary?.total_admin_cut || 0).toLocaleString('hu-HU')} Ft</h3>
-                  </div>
+                  <label style={ui.label}>IDŐSZAK TÍPUSA</label>
+                  <select value={logPeriodMode} onChange={e => setLogPeriodMode(e.target.value)} style={ui.input}>
+                    <option value="week">Heti bontás</option>
+                    <option value="month">Havi bontás</option>
+                  </select>
                 </div>
 
-                <h4 style={{ ...ui.cardTitle, marginBottom: '0.8rem', color: '#34d399' }}>Órák Részletes Rendszernaplója</h4>
-                {(!logData.lessons || logData.lessons.length === 0) ? (
-                  <p style={ui.emptyText}>Ebben az időszakban nem volt rögzített óra.</p>
+                {logPeriodMode === 'month' ? (
+                  <div style={ui.inputGroup}>
+                    <label style={ui.label}>HÓNAP</label>
+                    <input type="month" value={logSelectedMonth} onChange={e => setLogSelectedMonth(e.target.value)} style={ui.input} />
+                  </div>
                 ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={ui.table}>
-                      <thead>
-                        <tr>
-                          <th style={ui.th}>#ID</th>
-                          <th style={ui.th}>Időpont</th>
-                          <th style={ui.th}>Tanár</th>
-                          <th style={ui.th}>Diák</th>
-                          <th style={ui.th}>Tantárgy</th>
-                          <th style={ui.th}>Összeg</th>
-                          <th style={ui.th}>Jutalék</th>
-                          <th style={ui.th}>Fizetés</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {logData.lessons.map(l => (
-                          <tr key={l.id}>
-                            <td style={ui.td}>#{l.id}</td>
-                            <td style={ui.td}>{formatLessonTime(l.start_time, l.end_time)}</td>
-                            <td style={ui.td}>{l.teacher_name || 'Tanár'}</td>
-                            <td style={ui.td}>{l.student_name || 'Diák'}</td>
-                            <td style={ui.td}><strong>{l.subject}</strong></td>
-                            <td style={ui.td}>{(l.calculated_price || 0).toLocaleString('hu-HU')} Ft</td>
-                            <td style={{ ...ui.td, color: '#facc15' }}>{(l.commission_amount || 0).toLocaleString('hu-HU')} Ft</td>
-                            <td style={ui.td}>
-                              <select 
-                                value={l.payment_status || (l.is_paid ? 'cash' : 'unpaid')} 
-                                onChange={e => handlePaymentChange(l.id, e.target.value)}
-                                style={{
-                                  ...ui.input,
-                                  padding: '0.2rem 0.5rem',
-                                  fontSize: '0.8rem',
-                                  background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.2)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
-                                  borderColor: l.payment_status === 'settled' ? '#3b82f6' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#10b981' : '#ef4444'),
-                                  color: '#fff'
-                                }}
-                              >
-                                <option value="unpaid" style={{ background: '#0f2318' }}>Kifizetetlen</option>
-                                <option value="cash" style={{ background: '#0f2318' }}>Készpénz</option>
-                                <option value="transfer" style={{ background: '#0f2318' }}>Átutalás</option>
-                                <option value="settled" style={{ background: '#0f2318' }}>Rendezve</option>
-                              </select>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div style={ui.inputGroup}>
+                    <label style={ui.label}>HÉT</label>
+                    <input type="week" value={logSelectedWeek} onChange={e => setLogSelectedWeek(e.target.value)} style={ui.input} />
                   </div>
                 )}
               </div>
-            )}
+
+              {logData ? (
+                <div id="printable-log-section">
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={{ background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '1rem', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#34d399', fontWeight: '700' }}>ÖSSZES ÓRA</span>
+                      <h3 style={{ fontSize: '1.5rem', margin: '0.3rem 0 0 0', color: '#fff' }}>{logData.stats?.total_lessons || 0} db</h3>
+                    </div>
+
+                    <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1rem', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#60a5fa', fontWeight: '700' }}>BEFOLYT KINÁLAT / BRUTTÓ</span>
+                      <h3 style={{ fontSize: '1.5rem', margin: '0.3rem 0 0 0', color: '#fff' }}>{(logData.stats?.total_revenue || 0).toLocaleString('hu-HU')} Ft</h3>
+                    </div>
+
+                    <div style={{ background: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)', padding: '1rem', borderRadius: '12px' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#facc15', fontWeight: '700' }}>ADMIN RENDSZER JUTALÉK</span>
+                      <h3 style={{ fontSize: '1.5rem', margin: '0.3rem 0 0 0', color: '#fff' }}>{(logData.stats?.total_commission || 0).toLocaleString('hu-HU')} Ft</h3>
+                    </div>
+                  </div>
+
+                  <h4 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Időszakban Rögzített Órák</h4>
+                  {!logData.lessons || logData.lessons.length === 0 ? (
+                    <p style={ui.emptyText}>Ebben az időszakban nem volt rögzített óra.</p>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={ui.table}>
+                        <thead>
+                          <tr>
+                            <th style={ui.th}>ID</th>
+                            <th style={ui.th}>Időpont</th>
+                            <th style={ui.th}>Tanár</th>
+                            <th style={ui.th}>Diák</th>
+                            <th style={ui.th}>Tantárgy</th>
+                            <th style={ui.th}>Óradíj</th>
+                            <th style={ui.th}>Fizetés</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {logData.lessons.map(l => (
+                            <tr key={l.id}>
+                              <td style={ui.td}>#{l.id}</td>
+                              <td style={ui.td}>{formatLessonTime(l.start_time, l.end_time)}</td>
+                              <td style={ui.td}>{l.teacher_name || 'Tanár'}</td>
+                              <td style={ui.td}>{l.student_name || 'Diák'}</td>
+                              <td style={ui.td}>{l.subject}</td>
+                              <td style={ui.td}>{(l.calculated_price || 0).toLocaleString('hu-HU')} Ft</td>
+                              <td style={ui.td}>
+                                <span style={{
+                                  padding: '0.2rem 0.5rem',
+                                  borderRadius: '4px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: '700',
+                                  background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.2)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
+                                  color: l.payment_status === 'settled' ? '#60a5fa' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#34d399' : '#f87171')
+                                }}>
+                                  {l.payment_status === 'cash' ? 'Készpénz' : (l.payment_status === 'transfer' ? 'Átutalás' : (l.payment_status === 'settled' ? 'Rendezve' : 'Kifizetetlen'))}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p style={ui.emptyText}>Adatok betöltése folyamatban...</p>
+              )}
+            </div>
           </div>
         )}
 
         {activeTab === 'messages' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', minHeight: '500px' }} className="fade-in-up">
-            <div style={ui.glassCard}>
-              <h4 style={{ ...ui.cardTitle, marginBottom: '1rem', borderBottom: '1px solid rgba(52, 211, 153, 0.2)', paddingBottom: '0.5rem' }}>
-                Beszélgetések
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {conversations.length === 0 ? (
-                  <p style={{ ...ui.emptyText, fontSize: '0.85rem' }}>Nincsenek elérhető partnerek.</p>
-                ) : (
-                  conversations.map(u => (
-                    <button
-                      key={u.id}
-                      onClick={() => setSelectedUser(u)}
-                      style={{
-                        padding: '0.75rem',
-                        borderRadius: '10px',
-                        border: selectedUser?.id === u.id ? '1px solid #34d399' : '1px solid rgba(255,255,255,0.05)',
-                        background: selectedUser?.id === u.id ? 'rgba(52, 211, 153, 0.15)' : 'rgba(5, 15, 10, 0.4)',
-                        color: '#fff',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.2rem'
-                      }}
-                      className="btn-hover"
-                    >
-                      <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{u.full_name || u.name}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{u.role === 'teacher' ? 'Tanár' : (u.role === 'student' ? 'Diák' : 'Admin')}</span>
-                    </button>
-                  ))
-                )}
+          <div style={ui.glassCard} className="fade-in-up">
+            <h3 style={ui.sectionTitle}><MessageSquare size={20} color="#34d399"/> Üzenetek & Beszélgetések</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1rem', minHeight: '450px' }}>
+              <div style={{ borderRight: '1px solid rgba(52, 211, 153, 0.15)', paddingRight: '1rem' }}>
+                <h4 style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: '700', marginBottom: '0.8rem' }}>KAPCSOLATOK</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  {conversations.length === 0 ? (
+                    <p style={ui.emptyText}>Nincsenek elérhető elbeszélgetőtársak.</p>
+                  ) : (
+                    conversations.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedUser(c)}
+                        style={{
+                          textAlign: 'left',
+                          padding: '0.6rem 0.8rem',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: selectedUser?.id === c.id ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                          color: '#fff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.2rem'
+                        }}
+                      >
+                        <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{c.full_name}</span>
+                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{c.role === 'teacher' ? 'Tanár' : (c.is_admin ? 'Admin' : 'Diák')}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div style={{ ...ui.glassCard, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              {selectedUser ? (
-                <>
-                  <div style={{ borderBottom: '1px solid rgba(52, 211, 153, 0.2)', paddingBottom: '0.8rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <h4 style={{ ...ui.cardTitle, margin: 0 }}>{selectedUser.full_name || selectedUser.name}</h4>
-                      <span style={{ fontSize: '0.75rem', color: '#34d399' }}>{selectedUser.email}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                {selectedUser ? (
+                  <>
+                    <div style={{ borderBottom: '1px solid rgba(52, 211, 153, 0.15)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                      <h4 style={{ color: '#fff', margin: 0 }}>{selectedUser.full_name}</h4>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{selectedUser.email}</span>
                     </div>
-                  </div>
 
-                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingRight: '0.5rem', maxHeight: '380px', marginBottom: '1rem' }}>
-                    {messages.length === 0 ? (
-                      <p style={ui.emptyText}>Még nincs üzenetváltás ebben a beszélgetésben.</p>
-                    ) : (
-                      messages.map(m => {
-                        const isMe = m.sender_id === user?.id;
-                        return (
-                          <div
-                            key={m.id}
-                            style={{
-                              alignSelf: isMe ? 'flex-end' : 'flex-start',
-                              maxWidth: '70%',
-                              background: isMe ? 'linear-gradient(135deg, #059669 0%, #047857 100%)' : 'rgba(255, 255, 255, 0.08)',
-                              color: '#fff',
-                              padding: '0.75rem 1rem',
-                              borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                              border: isMe ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)'
-                            }}
-                          >
-                            {m.content && <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{m.content}</p>}
-                            
-                            {m.file_url && (
-                              <div style={{ marginTop: m.content ? '0.5rem' : 0 }}>
+                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', maxHeight: '350px', paddingRight: '0.5rem' }}>
+                      {messages.length === 0 ? (
+                        <p style={ui.emptyText}>Még nincsenek üzenetek ezzel a személlyel.</p>
+                      ) : (
+                        messages.map(m => {
+                          const isMine = m.sender_id === user.id;
+                          return (
+                            <div 
+                              key={m.id} 
+                              style={{ 
+                                alignSelf: isMine ? 'flex-end' : 'flex-start',
+                                maxWidth: '70%',
+                                background: isMine ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                                border: isMine ? '1px solid rgba(52, 211, 153, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+                                padding: '0.6rem 0.9rem',
+                                borderRadius: '12px',
+                                color: '#fff'
+                              }}
+                            >
+                              <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>{m.content}</p>
+                              {m.file_url && (
                                 <a 
                                   href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
                                   target="_blank" 
-                                  rel="noopener noreferrer"
-                                  style={{ color: '#a7f3d0', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'underline' }}
+                                  rel="noopener noreferrer" 
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#34d399', fontSize: '0.8rem', marginTop: '0.4rem', textDecoration: 'underline' }}
                                 >
-                                  <Paperclip size={14}/> {m.file_name || 'Csatolt fájl letöltése'}
+                                  <Paperclip size={12}/> {m.file_name || 'Melléklet letöltése'}
                                 </a>
-                              </div>
-                            )}
-
-                            <span style={{ fontSize: '0.65rem', color: isMe ? '#a7f3d0' : '#94a3b8', marginTop: '0.3rem', display: 'block', textAlign: 'right' }}>
-                              {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-
-                  <form onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {selectedFile && (
-                      <div style={{ fontSize: '0.8rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Paperclip size={14}/> Kijelölt fájl: {selectedFile.name}
-                        <button type="button" onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer' }}>✕</button>
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <label style={{ ...ui.secondaryBtnInline, cursor: 'pointer', padding: '0.75rem' }} title="Fájl csatolása">
-                        <Paperclip size={18}/>
-                        <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
-                      </label>
-
-                      <input 
-                        type="text" 
-                        placeholder="Írj üzenetet..." 
-                        value={newMessage} 
-                        onChange={e => setNewMessage(e.target.value)} 
-                        style={{ ...ui.input, flex: 1 }} 
-                      />
-
-                      <button type="submit" style={{ ...ui.primaryBtnInline, padding: '0.75rem 1.2rem' }} className="btn-hover">
-                        <Send size={16}/>
-                      </button>
+                              )}
+                              <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748b', textAlign: 'right', marginTop: '0.3rem' }}>
+                                {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                  </form>
-                </>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
-                  <p>Válassz egy partner-t a bal oldali listából az üzenetváltáshoz.</p>
-                </div>
-              )}
+
+                    <form onSubmit={handleSendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                      {selectedFile && (
+                        <div style={{ fontSize: '0.8rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <Paperclip size={14}/> Kiválasztva: {selectedFile.name}
+                          <button type="button" onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Írj egy üzenetet..." 
+                          value={newMessage} 
+                          onChange={e => setNewMessage(e.target.value)} 
+                          style={{ ...ui.input, flex: 1 }} 
+                        />
+                        <label style={{ ...ui.secondaryBtnInline, cursor: 'pointer', padding: '0.6rem 0.8rem' }}>
+                          <Paperclip size={16}/>
+                          <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                        </label>
+                        <button type="submit" style={ui.primaryBtnInline} className="btn-hover"><Send size={16}/></button>
+                      </div>
+                    </form>
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+                    Válassz ki egy beszélgetőpartnert a bal oldali listából.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} onUpdateUser={(updated) => setUser(updated)} />
+          <div style={ui.glassCard} className="fade-in-up">
+            <Profile user={user} setUser={setUser} token={token} />
+          </div>
         )}
+
       </main>
     </div>
   );
