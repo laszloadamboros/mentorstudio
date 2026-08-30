@@ -62,6 +62,14 @@ const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
   return diffMinutes <= 60 ? r50 : r100;
 };
 
+// Admin jutalék (Kornya cut) számítása órahossz alapján (50 perc <= 60: 1500 Ft, 100 perc > 60: 2000 Ft)
+const calculateAdminCut = (startTime, endTime) => {
+  const start = new Date(startTime);
+  const end = new Date(endTime);
+  const diffMinutes = Math.round((end - start) / (1000 * 60));
+  return diffMinutes <= 60 ? 1500 : 2000;
+};
+
 // Adatbázis sémák automatikus frissítése
 const initDb = async () => {
   try {
@@ -817,6 +825,83 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ error: 'Nincs jogosultságod' });
+    }
+
+    const { period, month, week } = req.query;
+    let startDate, endDate;
+
+    if (period === 'week' && week) {
+      const parts = week.split('-W');
+      const year = parseInt(parts[0]);
+      const weekNum = parseInt(parts[1]);
+
+      const simple = new Date(year, 0, 1 + (weekNum - 1) * 7);
+      const dow = simple.getDay();
+      const ISOweekStart = simple;
+      if (dow <= 4)
+        ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+      else
+        ISOweekStart.setDate(simple.getDate() + (8 - simple.getDay()));
+
+      startDate = new Date(ISOweekStart);
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 7);
+    } else {
+      const selectedMonth = month || new Date().toISOString().slice(0, 7);
+      startDate = new Date(`${selectedMonth}-01T00:00:00`);
+      endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+    }
+
+    const lessonsRes = await db.query(`
+      SELECT l.*, t.hourly_rate_50, t.hourly_rate_100, t.is_admin, s.full_name AS student_name
+      FROM lessons l
+      JOIN users t ON l.teacher_id = t.id
+      LEFT JOIN users s ON l.student_id = s.id
+      WHERE l.teacher_id = $1 AND l.start_time >= $2 AND l.start_time < $3
+      ORDER BY l.start_time DESC
+    `, [req.user.id, startDate, endDate]);
+
+    let totalGrossEarnings = 0;
+    let totalCutPayable = 0;
+
+    const lessonsCalculated = lessonsRes.rows.map(l => {
+      const grossPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin);
+      const adminCut = req.user.is_admin ? 0 : calculateAdminCut(l.start_time, l.end_time);
+      const netEarnings = grossPrice - adminCut;
+
+      totalGrossEarnings += grossPrice;
+      totalCutPayable += adminCut;
+
+      return {
+        ...l,
+        gross_price: grossPrice,
+        admin_cut: adminCut,
+        net_price: netEarnings
+      };
+    });
+
+    const netEarnings = totalGrossEarnings - totalCutPayable;
+
+    res.json({
+      is_admin: req.user.is_admin,
+      period: period || 'month',
+      lessons: lessonsCalculated,
+      total_lessons: lessonsCalculated.length,
+      total_gross: totalGrossEarnings,
+      total_cut: totalCutPayable,
+      net_earnings: netEarnings,
+      payee_email: 'kornya.kms@gmail.com'
+    });
+  } catch (err) {
+    console.error('Hiba a kereset számításakor:', err);
+    res.status(500).json({ error: 'Hiba a kereset kiszámításakor' });
+  }
+});
+
 app.get('/api/teacher/students', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(`
@@ -1241,6 +1326,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
     const allLessons = allLessonsRes.rows.map(l => ({
       ...l,
       calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin),
+      admin_cut: Boolean(l.is_admin) ? 0 : calculateAdminCut(l.start_time, l.end_time),
       in_period: new Date(l.start_time) >= startDate && new Date(l.start_time) < endDate
     }));
 
@@ -1250,32 +1336,49 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
     let period_cash = 0, period_transfer = 0, period_settled = 0;
     let total_cash = 0, total_transfer = 0, total_unpaid = 0;
 
+    let admin_own_revenue = 0;
+    let admin_commission_from_non_admins = 0;
+
     const teacherMap = {};
     const studentMap = {};
 
     allLessons.forEach(l => {
       const price = l.calculated_price;
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const cut = isAdminTeacher ? 0 : l.admin_cut;
+
       const isCash = l.payment_status === 'cash';
       const isTransfer = l.payment_status === 'transfer';
       const isSettled = l.payment_status === 'settled';
       const isPaid = l.is_paid || isCash || isTransfer;
       const isUnpaid = !isPaid && !isSettled;
 
+      if (l.in_period) {
+        if (isAdminTeacher) {
+          admin_own_revenue += price;
+        } else {
+          admin_commission_from_non_admins += cut;
+        }
+      }
+
       if (l.teacher_id) {
         if (!teacherMap[l.teacher_id]) {
           teacherMap[l.teacher_id] = {
             teacher_name: l.teacher_name,
+            is_admin: isAdminTeacher,
             hourly_rate_50: l.hourly_rate_50,
             hourly_rate_100: l.hourly_rate_100,
             period_lessons: 0,
             total_lessons: 0,
-            period_revenue: 0
+            period_revenue: 0,
+            period_commission: 0
           };
         }
         teacherMap[l.teacher_id].total_lessons += 1;
         if (l.in_period) {
           teacherMap[l.teacher_id].period_lessons += 1;
           teacherMap[l.teacher_id].period_revenue += price;
+          teacherMap[l.teacher_id].period_commission += cut;
         }
       }
 
@@ -1318,6 +1421,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       }
     });
 
+    const total_admin_earnings = admin_own_revenue + admin_commission_from_non_admins;
     const teachers_stats = Object.values(teacherMap).sort((a, b) => b.period_lessons - a.period_lessons);
     const students_stats = Object.values(studentMap).sort((a, b) => b.period_lessons - a.period_lessons);
 
@@ -1332,6 +1436,9 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       total_cash,
       total_transfer,
       total_unpaid,
+      admin_own_revenue,
+      admin_commission_from_non_admins,
+      total_admin_earnings,
       teachers_stats,
       students_stats
     });

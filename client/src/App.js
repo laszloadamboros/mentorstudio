@@ -4,7 +4,7 @@ import {
   Plus, Trash2, GraduationCap, Sparkles, ChevronRight, UserPlus, ShieldCheck,
   Megaphone, Pin, MessageSquare, Send, Search, CheckCircle2, AlertCircle, FileText,
   Users, CreditCard, KeyRound, ArrowLeft, Paperclip, Download, LogIn, MapPin, Layout,
-  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat, Save, X
+  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat, Save, X, Calculator
 } from 'lucide-react';
 import Profile from './profil';
 import ScheduleView from './ScheduleView';
@@ -228,6 +228,11 @@ export default function App() {
   const [logSelectedMonth, setLogSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [logSelectedWeek, setLogSelectedWeek] = useState('2026-W35');
   const [logData, setLogData] = useState(null);
+
+  // Tanári kereset szűrés állapot
+  const [teacherEarningsPeriod, setTeacherEarningsPeriod] = useState('month');
+  const [teacherEarningsMonth, setTeacherEarningsMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [teacherEarningsWeek, setTeacherEarningsWeek] = useState('2026-W35');
 
   const fetchLandingData = useCallback(async () => {
     try {
@@ -820,6 +825,80 @@ export default function App() {
     ? (landingData.team_image_url.startsWith('http') ? landingData.team_image_url : `${UPLOADS_BASE}${landingData.team_image_url}`)
     : null;
 
+  // Segédfüggvény a hét számának meghatározására (ISO hét)
+  const getISOWeek = (date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  };
+
+  // Nem admin tanári kereset kalkulációja
+  const calculateTeacherEarnings = () => {
+    if (!lessons || !Array.isArray(lessons)) {
+      return { totalGross: 0, totalCommission: 0, netEarnings: 0, count50: 0, count100: 0, lessonList: [] };
+    }
+
+    const filteredLessons = lessons.filter(l => {
+      if (!l.start_time) return false;
+      const lDate = new Date(l.start_time);
+      if (isNaN(lDate.getTime())) return false;
+
+      if (teacherEarningsPeriod === 'month') {
+        const monthStr = lDate.toISOString().slice(0, 7);
+        return monthStr === teacherEarningsMonth;
+      } else {
+        const year = lDate.getFullYear();
+        const weekNum = getISOWeek(lDate);
+        const weekStr = `${year}-W${weekNum < 10 ? '0' + weekNum : weekNum}`;
+        return weekStr === teacherEarningsWeek;
+      }
+    });
+
+    let totalGross = 0;
+    let totalCommission = 0;
+    let count50 = 0;
+    let count100 = 0;
+
+    const lessonList = filteredLessons.map(l => {
+      const start = new Date(l.start_time);
+      const end = new Date(l.end_time);
+      const durationMins = Math.round((end - start) / (1000 * 60));
+      
+      const price = l.calculated_price || l.custom_price || 0;
+      let commission = 0;
+
+      if (durationMins >= 80) {
+        commission = 2000;
+        count100++;
+      } else {
+        commission = 1500;
+        count50++;
+      }
+
+      totalGross += price;
+      totalCommission += commission;
+
+      return {
+        ...l,
+        durationMins,
+        price,
+        commission,
+        net: price - commission
+      };
+    });
+
+    return {
+      totalGross,
+      totalCommission,
+      netEarnings: totalGross - totalCommission,
+      count50,
+      count100,
+      lessonList
+    };
+  };
+
   if (!token) {
     return (
       <div style={ui.landingPageContainer}>
@@ -1064,6 +1143,8 @@ export default function App() {
     );
   }
 
+  const teacherEarningsData = calculateTeacherEarnings();
+
   return (
     <div style={ui.appLayout}>
       <style>{animations}</style>
@@ -1089,6 +1170,11 @@ export default function App() {
             <>
               <button onClick={() => setActiveTab('calendar')} style={activeTab === 'calendar' ? ui.activeTab : ui.tabBtn}>Naptár</button>
               <button onClick={() => setActiveTab('students')} style={activeTab === 'students' ? ui.activeTab : ui.tabBtn}>Diákok</button>
+              {!(user?.is_admin || user?.id === 1) && (
+                <button onClick={() => setActiveTab('earnings')} style={activeTab === 'earnings' ? ui.activeTab : ui.tabBtn}>
+                  <Calculator size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }}/> Kereset kimutatás
+                </button>
+              )}
               {(user?.is_admin || user?.id === 1) && (
                 <>
                   <button onClick={() => setActiveTab('teachers')} style={activeTab === 'teachers' ? ui.activeTab : ui.tabBtn}>Tanárok</button>
@@ -1729,6 +1815,108 @@ export default function App() {
           </div>
         )}
 
+        {user?.role === 'teacher' && !(user?.is_admin || user?.id === 1) && activeTab === 'earnings' && (
+          <div style={ui.glassCard} className="fade-in-up">
+            <h3 style={ui.sectionTitle}>
+              <Calculator size={22} color="#34d399"/> Óradíj & Kereset Kimutatás
+            </h3>
+            <p style={{ color: '#cbd5e1', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+              Az alábbiakban láthatod a beállított óradíjaid alapján befolyt bruttó összeget, a rendszerhasználati díjat (kornya.kms@gmail.com számára: 50 perces óránként 1.500 Ft, 100 perces óránként 2.000 Ft), valamint a levonás utáni **végleges nettó keresetedet**.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '2rem', background: 'rgba(5, 15, 10, 0.5)', padding: '1.2rem', borderRadius: '14px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+              <div style={ui.inputGroup}>
+                <label style={ui.label}>BONTÁSI IDŐSZAK</label>
+                <select value={teacherEarningsPeriod} onChange={e => setTeacherEarningsPeriod(e.target.value)} style={ui.input}>
+                  <option value="week">Heti bontás</option>
+                  <option value="month">Havi bontás</option>
+                </select>
+              </div>
+
+              {teacherEarningsPeriod === 'month' ? (
+                <div style={ui.inputGroup}>
+                  <label style={ui.label}>HÓNAP KIVÁLASZTÁSA (YYYY-MM)</label>
+                  <input type="month" value={teacherEarningsMonth} onChange={e => setTeacherEarningsMonth(e.target.value)} style={ui.input} />
+                </div>
+              ) : (
+                <div style={ui.inputGroup}>
+                  <label style={ui.label}>HÉT KIVÁLASZTÁSA (YYYY-Www)</label>
+                  <input type="week" value={teacherEarningsWeek} onChange={e => setTeacherEarningsWeek(e.target.value)} style={ui.input} />
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
+              <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.4)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#60a5fa', letterSpacing: '0.5px' }}>BEFOLYT BRUTTÓ ÖSSZEG</span>
+                  <DollarSign size={20} color="#60a5fa"/>
+                </div>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
+                  {teacherEarningsData.totalGross.toLocaleString('hu-HU')} Ft
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Diákok által fizetett összeg</span>
+              </div>
+
+              <div style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.4)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#f87171', letterSpacing: '0.5px' }}>LEVONT JUTALÉK (KORNYA.KMS)</span>
+                  <TrendingUp size={20} color="#f87171"/>
+                </div>
+                <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
+                  -{teacherEarningsData.totalCommission.toLocaleString('hu-HU')} Ft
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>50p: {teacherEarningsData.count50}x1500 Ft | 100p: {teacherEarningsData.count100}x2000 Ft</span>
+              </div>
+
+              <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%)', padding: '1.3rem', borderRadius: '16px', border: '2px solid rgba(52, 211, 153, 0.5)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#34d399', letterSpacing: '0.5px' }}>VÉGLEGES NETTÓ KERESET</span>
+                  <CheckCircle2 size={20} color="#34d399"/>
+                </div>
+                <h3 style={{ fontSize: '2rem', fontWeight: '900', color: '#34d399', margin: '0.5rem 0 0.2rem 0' }}>
+                  {teacherEarningsData.netEarnings.toLocaleString('hu-HU')} Ft
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: '#a7f3d0' }}>Kézhez kapandó tiszta összeg</span>
+              </div>
+            </div>
+
+            <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem' }}>Időszakban megtartott óráid és bontásuk</h4>
+            {teacherEarningsData.lessonList.length === 0 ? (
+              <p style={ui.emptyText}>Ebben az időszakban nem volt rögzített órád.</p>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={ui.table}>
+                  <thead>
+                    <tr>
+                      <th style={ui.th}>Időpont</th>
+                      <th style={ui.th}>Diák</th>
+                      <th style={ui.th}>Tantárgy</th>
+                      <th style={ui.th}>Időtartam</th>
+                      <th style={ui.th}>Óradíj (Bruttó)</th>
+                      <th style={ui.th}>Jutalék (KORNYA.KMS)</th>
+                      <th style={ui.th}>Saját Nettó</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teacherEarningsData.lessonList.map(l => (
+                      <tr key={l.id}>
+                        <td style={ui.td}>{formatLessonTime(l.start_time, l.end_time)}</td>
+                        <td style={ui.td}>{l.student_name || 'Diák'}</td>
+                        <td style={ui.td}><strong>{l.subject}</strong></td>
+                        <td style={ui.td}>{l.durationMins} perc</td>
+                        <td style={{ ...ui.td, color: '#60a5fa' }}>{l.price.toLocaleString('hu-HU')} Ft</td>
+                        <td style={{ ...ui.td, color: '#f87171' }}>-{l.commission.toLocaleString('hu-HU')} Ft</td>
+                        <td style={{ ...ui.td, color: '#34d399', fontWeight: '700' }}>{l.net.toLocaleString('hu-HU')} Ft</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {user?.role === 'teacher' && activeTab === 'students' && (
           <div>
             <div style={ui.glassCard} className="fade-in-up">
@@ -1958,14 +2146,9 @@ export default function App() {
                           />
                         </div>
 
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>ÓRADÍJ - 100 PERC (FT)</label>
-                          <input 
-                            type="number" 
-                            value={editTeacherData.hourly_rate_100} 
-                            onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0 })} 
-                            style={ui.input} 
-                          />
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button onClick={() => handleSaveEditTeacher(t.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={16}/> Mentés</button>
+                          <button onClick={() => setEditingTeacherId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={16}/> Mégse</button>
                         </div>
                       </div>
 
@@ -2051,13 +2234,13 @@ export default function App() {
             </div>
 
             <div id="printable-log-section">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
                 <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(52, 211, 153, 0.4)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#34d399', letterSpacing: '0.5px' }}>IDŐSZAKI FORGALOM</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#34d399', letterSpacing: '0.5px' }}>IDŐSZAKI BRUTTÓ FORGALOM</span>
                     <DollarSign size={20} color="#34d399"/>
                   </div>
-                  <h3 style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
                     {(logData?.period_revenue || 0).toLocaleString('hu-HU')} Ft
                   </h3>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
@@ -2065,23 +2248,34 @@ export default function App() {
                   </span>
                 </div>
 
+                <div style={{ background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(202, 138, 4, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(234, 179, 8, 0.4)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#facc15', letterSpacing: '0.5px' }}>ADMIN BEFOLYÓ JUTALÉKA</span>
+                    <TrendingUp size={20} color="#facc15"/>
+                  </div>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
+                    {(logData?.admin_commission || 0).toLocaleString('hu-HU')} Ft
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Nem admin tanárok utáni jutalék</span>
+                </div>
+
                 <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(59, 130, 246, 0.4)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#60a5fa', letterSpacing: '0.5px' }}>GÖNGYÖLÍTETT ÖSSZFORGALOM</span>
-                    <TrendingUp size={20} color="#60a5fa"/>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#60a5fa', letterSpacing: '0.5px' }}>ADMIN ÖSSZES KERESETE</span>
+                    <DollarSign size={20} color="#60a5fa"/>
                   </div>
-                  <h3 style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
-                    {(logData?.cumulative_revenue || 0).toLocaleString('hu-HU')} Ft
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#60a5fa', margin: '0.5rem 0 0.2rem 0' }}>
+                    {((logData?.admin_own_revenue || 0) + (logData?.admin_commission || 0)).toLocaleString('hu-HU')} Ft
                   </h3>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Teljes mentorstúdió forgalom</span>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Saját órák ({logData?.admin_own_revenue || 0} Ft) + Jutalékok</span>
                 </div>
 
                 <div style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(147, 51, 234, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(168, 85, 247, 0.4)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#c084fc', letterSpacing: '0.5px' }}>MEGTARTOTT ÓRÁK (IDŐSZAK)</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#c084fc', letterSpacing: '0.5px' }}>MEGTARTOTT ÓRÁK</span>
                     <Clock size={20} color="#c084fc"/>
                   </div>
-                  <h3 style={{ fontSize: '2rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff', margin: '0.5rem 0 0.2rem 0' }}>
                     {logData?.total_lessons || 0} óra
                   </h3>
                   <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Rögzített alkalmak</span>
@@ -2104,6 +2298,7 @@ export default function App() {
                           <th style={ui.th}>Diák</th>
                           <th style={ui.th}>Tantárgy / Téma</th>
                           <th style={ui.th}>Óradíj</th>
+                          <th style={ui.th}>Jutalék (Admin)</th>
                           <th style={ui.th}>Fizetés Státusza</th>
                         </tr>
                       </thead>
@@ -2111,17 +2306,22 @@ export default function App() {
                         {logData.lessons.map(l => (
                           <tr key={l.id}>
                             <td style={ui.td}>{formatLessonTime(l.start_time, l.end_time)}</td>
-                            <td style={{ ...ui.td, fontWeight: '700', color: '#fff' }}>{l.teacher_name || 'Tanár'}</td>
+                            <td style={{ ...ui.td, fontWeight: '700', color: '#fff' }}>
+                              {l.teacher_name || 'Tanár'} {l.is_admin ? '(Admin)' : ''}
+                            </td>
                             <td style={ui.td}>{l.student_name || 'Diák'}</td>
                             <td style={ui.td}><strong>{l.subject}</strong> {l.topic ? `(${l.topic})` : ''}</td>
                             <td style={{ ...ui.td, color: '#34d399', fontWeight: '600' }}>{(l.calculated_price || 0).toLocaleString('hu-HU')} Ft</td>
+                            <td style={{ ...ui.td, color: '#facc15', fontWeight: '600' }}>
+                              {!l.is_admin && l.teacher_email !== 'kornya.kms@gmail.com' ? `${l.commission || 0} Ft` : '0 Ft (Saját)'}
+                            </td>
                             <td style={ui.td}>
                               <span style={{ 
                                 ...ui.badge, 
                                 background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.2)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
                                 color: l.payment_status === 'settled' ? '#60a5fa' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#34d399' : '#f87171')
                               }}>
-                                {l.payment_status === 'settled' ? 'Rendezve' : (l.payment_status === 'cash' ? 'Készpénz' : (l.payment_status === 'transfer' ? 'Átutalás' : (l.is_paid ? 'Kifizetve' : 'Kifizetetlen')))}
+                                {l.payment_status === 'settled' ? '🤝 Rendezve' : (l.payment_status === 'transfer' ? '🏦 Utalva' : (l.is_paid || l.payment_status === 'cash' ? '💵 Kifizetve' : '❌ Kifizetetlen'))}
                               </span>
                             </td>
                           </tr>
@@ -2131,229 +2331,121 @@ export default function App() {
                   </div>
                 )}
               </div>
-
-              <div style={{ marginBottom: '2.5rem' }}>
-                <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Users size={18}/> Tanári Teljesítmények
-                </h4>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={ui.table}>
-                    <thead>
-                      <tr>
-                        <th style={ui.th}>Tanár Neve</th>
-                        <th style={ui.th}>50p ÓRADÍJ</th>
-                        <th style={ui.th}>100p ÓRADÍJ</th>
-                        <th style={ui.th}>Időszaki Óraszám</th>
-                        <th style={ui.th}>Göngyölített Óra</th>
-                        <th style={ui.th}>Időszaki Forgalom</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {logData?.teachers_stats && logData.teachers_stats.length > 0 ? (
-                        logData.teachers_stats.map((t, idx) => (
-                          <tr key={idx}>
-                            <td style={{ ...ui.td, color: '#fff', fontWeight: '700' }}>{t.teacher_name}</td>
-                            <td style={ui.td}>{(t.hourly_rate_50 || 5000).toLocaleString('hu-HU')} Ft</td>
-                            <td style={ui.td}>{(t.hourly_rate_100 || 9000).toLocaleString('hu-HU')} Ft</td>
-                            <td style={ui.td}><strong>{t.period_lessons}</strong> óra</td>
-                            <td style={ui.td}>{t.total_lessons} óra</td>
-                            <td style={{ ...ui.td, color: '#34d399', fontWeight: '700' }}>{(t.period_revenue || 0).toLocaleString('hu-HU')} Ft</td>
-                          </tr>
-                        ))
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '2.5rem' }}>
-                <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <GraduationCap size={18}/> Diákok Órái & Befizetései
-                </h4>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={ui.table}>
-                    <thead>
-                      <tr>
-                        <th style={ui.th}>Diák Neve</th>
-                        <th style={ui.th}>Időszaki Órák</th>
-                        <th style={ui.th}>Időszaki Befizetés</th>
-                        <th style={ui.th}>Göngyölített Óra</th>
-                        <th style={ui.th}>Összes Befizetés</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {logData?.students_stats && logData.students_stats.length > 0 ? (
-                        logData.students_stats.map((s, idx) => (
-                          <tr key={idx}>
-                            <td style={{ ...ui.td, color: '#fff', fontWeight: '700' }}>{s.student_name}</td>
-                            <td style={ui.td}><strong>{s.period_lessons}</strong> óra</td>
-                            <td style={{ ...ui.td, color: '#34d399', fontWeight: '700' }}>{(s.period_paid || 0).toLocaleString('hu-HU')} Ft</td>
-                            <td style={ui.td}>{s.total_lessons} óra</td>
-                            <td style={{ ...ui.td, color: '#60a5fa', fontWeight: '700' }}>{(s.total_paid || 0).toLocaleString('hu-HU')} Ft</td>
-                          </tr>
-                        ))
-                      ) : null}   
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div>
-                <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <BarChart3 size={18}/> Mentorstúdió Pénzügyi Összesítője
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', background: 'rgba(5, 15, 10, 0.4)', padding: '1.5rem', borderRadius: '14px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
-                  <div>
-                    <h5 style={{ color: '#a7f3d0', fontSize: '1rem', marginBottom: '0.8rem' }}>📅 Kiválasztott Időszak Pénzügyei</h5>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#cbd5e1' }}>Készpénzes bevételek:</span>
-                        <strong style={{ color: '#fff' }}>{(logData?.period_cash || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#cbd5e1' }}>Átutalásos bevételek:</span>
-                        <strong style={{ color: '#fff' }}>{(logData?.period_transfer || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#cbd5e1' }}>Rendezett / Jutalékmentes:</span>
-                        <strong style={{ color: '#fff' }}>{(logData?.period_settled || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
-                        <span style={{ color: '#34d399', fontWeight: '700' }}>Időszaki Összesen:</span>
-                        <strong style={{ color: '#34d399', fontSize: '1.1rem' }}>{(logData?.period_revenue || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h5 style={{ color: '#93c5fd', fontSize: '1rem', marginBottom: '0.8rem' }}>📈 Göngyölített Összesített Forgalom</h5>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#cbd5e1' }}>Teljes Készpénz:</span>
-                        <strong style={{ color: '#fff' }}>{(logData?.total_cash || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#cbd5e1' }}>Teljes Átutalás:</span>
-                        <strong style={{ color: '#fff' }}>{(logData?.total_transfer || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#cbd5e1' }}>Függőben lévő (Kifizetetlen):</span>
-                        <strong style={{ color: '#f87171' }}>{(logData?.total_unpaid || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.2rem' }}>
-                        <span style={{ color: '#60a5fa', fontWeight: '700' }}>Göngyölített Összforgalom:</span>
-                        <strong style={{ color: '#60a5fa', fontSize: '1.1rem' }}>{(logData?.cumulative_revenue || 0).toLocaleString('hu-HU')} Ft</strong>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}
 
         {activeTab === 'messages' && (
-          <div style={{ ...ui.glassCard, height: '70vh', display: 'flex', gap: '1rem', padding: '1rem' }} className="fade-in-up">
-            <div style={{ width: '30%', borderRight: '1px solid rgba(52, 211, 153, 0.2)', paddingRight: '1rem', overflowY: 'auto' }}>
-              <h4 style={{ color: '#34d399', marginBottom: '1rem' }}>Beszélgetések</h4>
-              {conversations.map(c => (
-                <div 
-                  key={c.id} 
-                  onClick={() => setSelectedUser(c)}
-                  style={{
-                    padding: '0.8rem',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    background: selectedUser?.id === c.id ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255,255,255,0.03)',
-                    marginBottom: '0.5rem',
-                    border: selectedUser?.id === c.id ? '1px solid rgba(52, 211, 153, 0.4)' : 'none'
-                  }}
-                  className="btn-hover"
-                >
-                  <strong style={{ color: '#fff', display: 'block' }}>{c.full_name}</strong>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{c.role === 'teacher' ? 'Tanár' : 'Diák'}</span>
-                </div>
-              ))}
-            </div>
+          <div style={ui.glassCard} className="fade-in-up">
+            <h3 style={ui.sectionTitle}><MessageSquare size={20} color="#34d399"/> Üzenetek & Belső Chat</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', minHeight: '450px' }}>
+              <div style={{ borderRight: '1px solid rgba(52, 211, 153, 0.2)', paddingRight: '1rem' }}>
+                <h4 style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: '700', marginBottom: '0.8rem' }}>BESZÉLGETÉSEK</h4>
+                {conversations.length === 0 ? (
+                  <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Nincsenek korábbi beszélgetések.</p>
+                ) : (
+                  conversations.map(c => (
+                    <div 
+                      key={c.id} 
+                      onClick={() => setSelectedUser(c)} 
+                      style={{ 
+                        padding: '0.8rem', 
+                        borderRadius: '10px', 
+                        cursor: 'pointer', 
+                        background: selectedUser?.id === c.id ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                        border: selectedUser?.id === c.id ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent',
+                        marginBottom: '0.5rem',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <div style={{ fontWeight: '700', color: '#fff', fontSize: '0.9rem' }}>{c.full_name}</div>
+                      <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{c.role === 'teacher' ? 'Tanár' : 'Diák'}</div>
+                    </div>
+                  ))
+                )}
+              </div>
 
-            <div style={{ width: '70%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              {selectedUser ? (
-                <>
-                  <div style={{ paddingBottom: '0.8rem', borderBottom: '1px solid rgba(52, 211, 153, 0.2)', marginBottom: '1rem' }}>
-                    <h4 style={{ color: '#fff', margin: 0 }}>{selectedUser.full_name}</h4>
-                    <span style={{ fontSize: '0.8rem', color: '#34d399' }}>{selectedUser.role === 'teacher' ? 'Tanár' : 'Diák'}</span>
-                  </div>
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                {selectedUser ? (
+                  <>
+                    <div style={{ borderBottom: '1px solid rgba(52, 211, 153, 0.2)', paddingBottom: '0.8rem', marginBottom: '1rem' }}>
+                      <h4 style={{ color: '#fff', margin: 0 }}>{selectedUser.full_name}</h4>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{selectedUser.email}</span>
+                    </div>
 
-                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingRight: '0.5rem' }}>
-                    {messages.map(m => {
-                      const isMe = m.sender_id === user.id;
-                      return (
-                        <div 
-                          key={m.id} 
-                          style={{
-                            alignSelf: isMe ? 'flex-end' : 'flex-start',
-                            maxWidth: '70%',
-                            background: isMe ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                            border: isMe ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: isMe ? '16px 16px 0px 16px' : '16px 16px 16px 0px',
-                            padding: '0.8rem 1rem',
-                            color: '#fff'
-                          }}
-                        >
-                          {m.content && <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{m.content}</p>}
-                          {m.file_url && (
-                            <a 
-                              href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#34d399', marginTop: m.content ? '0.5rem' : 0, textDecoration: 'underline', fontSize: '0.85rem' }}
+                    <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingRight: '0.5rem', maxHeight: '320px' }}>
+                      {messages.length === 0 ? (
+                        <p style={{ color: '#64748b', fontSize: '0.85rem', textAlign: 'center', marginTop: '2rem' }}>Még nincs üzenetváltás.</p>
+                      ) : (
+                        messages.map(m => {
+                          const isMine = m.sender_id === user.id;
+                          return (
+                            <div 
+                              key={m.id} 
+                              style={{ 
+                                alignSelf: isMine ? 'flex-end' : 'flex-start',
+                                maxWidth: '75%',
+                                background: isMine ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.08)',
+                                color: '#fff',
+                                padding: '0.7rem 1rem',
+                                borderRadius: isMine ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                                border: isMine ? 'none' : '1px solid rgba(255, 255, 255, 0.1)'
+                              }}
                             >
-                              <Paperclip size={14} /> CSATOLMÁNY LETÖLTÉSE <Download size={14} />
-                            </a>
-                          )}
-                          <span style={{ display: 'block', textAlign: 'right', fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.3rem' }}>
-                            {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      );
-                    })}
+                              <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>{m.content}</p>
+                              {m.file_url && (
+                                <a 
+                                  href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#a7f3d0', fontSize: '0.8rem', marginTop: '0.5rem', textDecoration: 'underline' }}
+                                >
+                                  <Paperclip size={14}/> Csatolt fájl megtekintése
+                                </a>
+                              )}
+                              <span style={{ fontSize: '0.65rem', color: isMine ? 'rgba(255,255,255,0.7)' : '#94a3b8', display: 'block', textAlign: 'right', marginTop: '0.3rem' }}>
+                                {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    <form onSubmit={handleSendMessage} style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <input 
+                        type="text" 
+                        placeholder="Írj üzenetet..." 
+                        value={newMessage} 
+                        onChange={e => setNewMessage(e.target.value)} 
+                        style={{ ...ui.input, flex: 1 }} 
+                      />
+                      <label style={{ cursor: 'pointer', background: 'rgba(255,255,255,0.1)', padding: '0.8rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Paperclip size={18} color="#34d399" />
+                        <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                      </label>
+                      <button type="submit" style={ui.primaryBtnInline} className="btn-hover">
+                        <Send size={16}/> Send
+                      </button>
+                    </form>
+                    {selectedFile && (
+                      <div style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '0.4rem' }}>
+                        Kiválasztott fájl: {selectedFile.name}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+                    Válassz ki egy beszélgetést a bal oldali sávból!
                   </div>
-
-                  <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Írj üzenetet..." 
-                      value={newMessage} 
-                      onChange={e => setNewMessage(e.target.value)} 
-                      style={{ ...ui.input, flex: 1 }} 
-                    />
-                    
-                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.08)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(52, 211, 153, 0.2)' }} className="btn-hover" title="Fájl csatolása">
-                      <Paperclip size={18} color={selectedFile ? '#34d399' : '#cbd5e1'} />
-                      <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
-                    </label>
-
-                    <button type="submit" style={{ ...ui.primaryBtnInline, padding: '0.8rem 1.2rem' }} className="btn-hover">
-                      <Send size={18} />
-                    </button>
-                  </form>
-                  {selectedFile && (
-                    <span style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '0.2rem' }}>
-                      Csatolt fájl: {selectedFile.name}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                  Válassz ki egy beszélgetést a bal oldali listából.
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} setUser={setUser} API_BASE={API_BASE} />
+          <Profile user={user} setUser={setUser} token={token} />
         )}
 
       </main>
