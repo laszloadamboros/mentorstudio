@@ -722,10 +722,14 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
 
     const result = await db.query(query, params);
     
-    const lessons = result.rows.map(l => ({
-      ...l,
-      calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin)
-    }));
+    const lessons = result.rows.map(l => {
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      return {
+        ...l,
+        calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher),
+        admin_cut: isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time)
+      };
+    });
 
     res.json(lessons);
   } catch (err) {
@@ -841,10 +845,14 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
     query += ` ORDER BY l.start_time DESC`;
 
     const result = await db.query(query, params);
-    const lessonsWithCalculations = result.rows.map(l => ({
-      ...l,
-      calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin)
-    }));
+    const lessonsWithCalculations = result.rows.map(l => {
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      return {
+        ...l,
+        calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher),
+        admin_cut: isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time)
+      };
+    });
     res.json(lessonsWithCalculations);
   } catch (err) {
     res.status(500).json({ error: 'Hiba az órák lekérésekor' });
@@ -895,8 +903,9 @@ app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
     let totalCutPayable = 0;
 
     const lessonsCalculated = lessonsRes.rows.map(l => {
-      const grossPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin);
-      const adminCut = req.user.is_admin ? 0 : calculateAdminCut(l.start_time, l.end_time);
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const grossPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
+      const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
       const netEarnings = grossPrice - adminCut;
 
       totalGrossEarnings += grossPrice;
@@ -1375,12 +1384,19 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
       ORDER BY l.start_time DESC
     `, teacher_id ? [teacher_id] : []);
 
-    const allLessons = allLessonsRes.rows.map(l => ({
-      ...l,
-      calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin),
-      admin_cut: Boolean(l.is_admin) ? 0 : calculateAdminCut(l.start_time, l.end_time),
-      in_period: new Date(l.start_time) >= startDate && new Date(l.start_time) < endDate
-    }));
+    const allLessons = allLessonsRes.rows.map(l => {
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const calculatedPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
+      const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
+
+      return {
+        ...l,
+        calculated_price: calculatedPrice,
+        admin_cut: adminCut,
+        admin_share: adminCut,
+        in_period: new Date(l.start_time) >= startDate && new Date(l.start_time) < endDate
+      };
+    });
 
     const lessonsWithPrices = allLessons.filter(l => l.in_period);
 
@@ -1397,7 +1413,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
     allLessons.forEach(l => {
       const price = l.calculated_price;
       const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
-      const cut = isAdminTeacher ? 0 : l.admin_cut;
+      const cut = l.admin_cut;
 
       const isCash = l.payment_status === 'cash';
       const isTransfer = l.payment_status === 'transfer';
