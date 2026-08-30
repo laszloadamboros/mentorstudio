@@ -79,7 +79,9 @@ const initDb = async () => {
       ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP,
       ADD COLUMN IF NOT EXISTS hourly_rate_50 INT DEFAULT 5000,
       ADD COLUMN IF NOT EXISTS hourly_rate_100 INT DEFAULT 9000,
-      ADD COLUMN IF NOT EXISTS notes TEXT;
+      ADD COLUMN IF NOT EXISTS notes TEXT,
+      ADD COLUMN IF NOT EXISTS school VARCHAR(255),
+      ADD COLUMN IF NOT EXISTS class_name VARCHAR(50);
 
       ALTER TABLE lessons 
       ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'unpaid',
@@ -454,7 +456,9 @@ app.post('/api/auth/login', async (req, res) => {
         bio: user.bio,
         subject: user.subject,
         hourly_rate_50: user.hourly_rate_50,
-        hourly_rate_100: user.hourly_rate_100
+        hourly_rate_100: user.hourly_rate_100,
+        school: user.school,
+        class_name: user.class_name
       }
     });
   } catch (err) {
@@ -528,7 +532,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
-    const result = await db.query('SELECT id, full_name, email, role, is_admin, phone, bio, subject, hourly_rate_50, hourly_rate_100 FROM users WHERE id = $1', [req.user.id]);
+    const result = await db.query('SELECT id, full_name, email, role, is_admin, phone, bio, subject, hourly_rate_50, hourly_rate_100, school, class_name FROM users WHERE id = $1', [req.user.id]);
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Hiba a profil lekérésekor' });
@@ -536,20 +540,20 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 });
 
 app.put('/api/profile', authenticateToken, async (req, res) => {
-  const { full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, password } = req.body;
+  const { full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, password, school, class_name } = req.body;
   try {
     let r50 = hourly_rate_50 !== undefined && hourly_rate_50 !== '' ? parseInt(hourly_rate_50) : 5000;
     let r100 = hourly_rate_100 !== undefined && hourly_rate_100 !== '' ? parseInt(hourly_rate_100) : 9000;
 
-    let query = 'UPDATE users SET full_name = $1, email = $2, phone = $3, bio = $4, subject = $5, hourly_rate_50 = $6, hourly_rate_100 = $7';
-    let params = [full_name, email, phone, bio, subject, r50, r100];
+    let query = 'UPDATE users SET full_name = $1, email = $2, phone = $3, bio = $4, subject = $5, hourly_rate_50 = $6, hourly_rate_100 = $7, school = $8, class_name = $9';
+    let params = [full_name, email, phone, bio, subject, r50, r100, school || '', class_name || ''];
 
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += ', password_hash = $8 WHERE id = $9 RETURNING id, full_name, email, role, is_admin, phone, bio, subject, hourly_rate_50, hourly_rate_100';
+      query += ', password_hash = $10 WHERE id = $11 RETURNING id, full_name, email, role, is_admin, phone, bio, subject, hourly_rate_50, hourly_rate_100, school, class_name';
       params.push(hashedPassword, req.user.id);
     } else {
-      query += ' WHERE id = $8 RETURNING id, full_name, email, role, is_admin, phone, bio, subject, hourly_rate_50, hourly_rate_100';
+      query += ' WHERE id = $10 RETURNING id, full_name, email, role, is_admin, phone, bio, subject, hourly_rate_50, hourly_rate_100, school, class_name';
       params.push(req.user.id);
     }
 
@@ -905,11 +909,11 @@ app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
 app.get('/api/teacher/students', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT s.id, s.full_name, s.email, s.phone, s.notes, COUNT(l.id) AS total_lessons
+      SELECT s.id, s.full_name, s.email, s.phone, s.notes, s.school, s.class_name, COUNT(l.id) AS total_lessons
       FROM users s
       LEFT JOIN lessons l ON s.id = l.student_id
       WHERE s.role = 'student'
-      GROUP BY s.id, s.full_name, s.email, s.phone, s.notes
+      GROUP BY s.id, s.full_name, s.email, s.phone, s.notes, s.school, s.class_name
       ORDER BY s.full_name ASC
     `);
     res.json(result.rows);
@@ -919,16 +923,16 @@ app.get('/api/teacher/students', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/teacher/students', authenticateToken, async (req, res) => {
-  const { full_name, email, password, phone, notes } = req.body;
+  const { full_name, email, password, phone, notes, school, class_name } = req.body;
   try {
     if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Nincs jogosultságod' });
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.query(`
-      INSERT INTO users (full_name, email, password_hash, role, phone, notes)
-      VALUES ($1, $2, $3, 'student', $4, $5)
-      RETURNING id, full_name, email, phone, notes
-    `, [full_name, email, hashedPassword, phone || '', notes || '']);
+      INSERT INTO users (full_name, email, password_hash, role, phone, notes, school, class_name)
+      VALUES ($1, $2, $3, 'student', $4, $5, $6, $7)
+      RETURNING id, full_name, email, phone, notes, school, class_name
+    `, [full_name, email, hashedPassword, phone || '', notes || '', school || '', class_name || '']);
 
     res.json(result.rows[0]);
   } catch (err) {
@@ -936,23 +940,23 @@ app.post('/api/teacher/students', authenticateToken, async (req, res) => {
   }
 });
 
-// Diák szerkesztése API ENDPOINT (megjegyzéssel bővítve)
+// Diák szerkesztése API ENDPOINT (iskola és osztály támogatásával)
 app.put('/api/teacher/students/:id', authenticateToken, async (req, res) => {
-  const { full_name, email, phone, notes, password } = req.body;
+  const { full_name, email, phone, notes, school, class_name, password } = req.body;
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ error: 'Nincs jogosultságod' });
     }
 
-    let query = `UPDATE users SET full_name = $1, email = $2, phone = $3, notes = $4`;
-    let params = [full_name, email, phone || '', notes || ''];
+    let query = `UPDATE users SET full_name = $1, email = $2, phone = $3, notes = $4, school = $5, class_name = $6`;
+    let params = [full_name, email, phone || '', notes || '', school || '', class_name || ''];
 
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += `, password_hash = $5 WHERE id = $6 AND role = 'student' RETURNING id, full_name, email, phone, notes`;
+      query += `, password_hash = $7 WHERE id = $8 AND role = 'student' RETURNING id, full_name, email, phone, notes, school, class_name`;
       params.push(hashedPassword, req.params.id);
     } else {
-      query += ` WHERE id = $5 AND role = 'student' RETURNING id, full_name, email, phone, notes`;
+      query += ` WHERE id = $7 AND role = 'student' RETURNING id, full_name, email, phone, notes, school, class_name`;
       params.push(req.params.id);
     }
 
