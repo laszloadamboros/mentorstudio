@@ -114,6 +114,11 @@ const initDb = async () => {
         created_by INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE about_us
+      ADD COLUMN IF NOT EXISTS created_by INT,
+      ADD COLUMN IF NOT EXISTS image_url VARCHAR(500),
+      ADD COLUMN IF NOT EXISTS description TEXT;
     `);
 
     const landingCheck = await db.query('SELECT id FROM landing_page LIMIT 1');
@@ -623,7 +628,7 @@ app.get('/api/about-us', authenticateToken, async (req, res) => {
   }
 });
 
-// Javított Névjegy / Bemutatkozó létrehozás endpoint
+// Névjegy / Bemutatkozó létrehozás endpoint
 app.post('/api/about-us', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     if (req.user.role !== 'teacher') {
