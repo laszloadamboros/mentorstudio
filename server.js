@@ -70,7 +70,8 @@ const initDb = async () => {
       ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255),
       ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP,
       ADD COLUMN IF NOT EXISTS hourly_rate_50 INT DEFAULT 5000,
-      ADD COLUMN IF NOT EXISTS hourly_rate_100 INT DEFAULT 9000;
+      ADD COLUMN IF NOT EXISTS hourly_rate_100 INT DEFAULT 9000,
+      ADD COLUMN IF NOT EXISTS notes TEXT;
 
       ALTER TABLE lessons 
       ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'unpaid',
@@ -819,11 +820,11 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
 app.get('/api/teacher/students', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT s.id, s.full_name, s.email, s.phone, COUNT(l.id) AS total_lessons
+      SELECT s.id, s.full_name, s.email, s.phone, s.notes, COUNT(l.id) AS total_lessons
       FROM users s
       LEFT JOIN lessons l ON s.id = l.student_id
       WHERE s.role = 'student'
-      GROUP BY s.id, s.full_name, s.email, s.phone
+      GROUP BY s.id, s.full_name, s.email, s.phone, s.notes
       ORDER BY s.full_name ASC
     `);
     res.json(result.rows);
@@ -833,16 +834,16 @@ app.get('/api/teacher/students', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/teacher/students', authenticateToken, async (req, res) => {
-  const { full_name, email, password, phone } = req.body;
+  const { full_name, email, password, phone, notes } = req.body;
   try {
     if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Nincs jogosultságod' });
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.query(`
-      INSERT INTO users (full_name, email, password_hash, role, phone)
-      VALUES ($1, $2, $3, 'student', $4)
-      RETURNING id, full_name, email, phone
-    `, [full_name, email, hashedPassword, phone || '']);
+      INSERT INTO users (full_name, email, password_hash, role, phone, notes)
+      VALUES ($1, $2, $3, 'student', $4, $5)
+      RETURNING id, full_name, email, phone, notes
+    `, [full_name, email, hashedPassword, phone || '', notes || '']);
 
     res.json(result.rows[0]);
   } catch (err) {
@@ -850,23 +851,23 @@ app.post('/api/teacher/students', authenticateToken, async (req, res) => {
   }
 });
 
-// ÚJ: Diák szerkesztése API ENDPOINT
+// Diák szerkesztése API ENDPOINT (megjegyzéssel bővítve)
 app.put('/api/teacher/students/:id', authenticateToken, async (req, res) => {
-  const { full_name, email, phone, password } = req.body;
+  const { full_name, email, phone, notes, password } = req.body;
   try {
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ error: 'Nincs jogosultságod' });
     }
 
-    let query = `UPDATE users SET full_name = $1, email = $2, phone = $3`;
-    let params = [full_name, email, phone || ''];
+    let query = `UPDATE users SET full_name = $1, email = $2, phone = $3, notes = $4`;
+    let params = [full_name, email, phone || '', notes || ''];
 
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += `, password_hash = $4 WHERE id = $5 AND role = 'student' RETURNING id, full_name, email, phone`;
+      query += `, password_hash = $5 WHERE id = $6 AND role = 'student' RETURNING id, full_name, email, phone, notes`;
       params.push(hashedPassword, req.params.id);
     } else {
-      query += ` WHERE id = $4 AND role = 'student' RETURNING id, full_name, email, phone`;
+      query += ` WHERE id = $5 AND role = 'student' RETURNING id, full_name, email, phone, notes`;
       params.push(req.params.id);
     }
 
@@ -906,7 +907,7 @@ app.post('/api/teacher/teachers', authenticateToken, async (req, res) => {
     const result = await db.query(`
       INSERT INTO users (full_name, email, password_hash, role, phone, bio, subject, is_admin, hourly_rate_50, hourly_rate_100)
       VALUES ($1, $2, $3, 'teacher', $4, $5, $6, $7, $8, $9)
-      RETURNING id, full_name, email, subject, is_admin, hourly_rate_50, hourly_rate_100
+      RETURNING id, full_name, email, phone, bio, subject, is_admin, hourly_rate_50, hourly_rate_100
     `, [full_name, email, hashedPassword, phone || '', bio || '', subject || 'Matematika', is_admin || false, r50, r100]);
 
     res.json(result.rows[0]);
@@ -915,6 +916,7 @@ app.post('/api/teacher/teachers', authenticateToken, async (req, res) => {
   }
 });
 
+// Tanár szerkesztése API ENDPOINT
 app.put('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   const { full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, is_admin, password } = req.body;
   try {
@@ -1054,6 +1056,24 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Hiba az óra létrehozásakor:', err);
     res.status(500).json({ error: 'Hiba az óra létrehozásakor' });
+  }
+});
+
+// Óra frissítése
+app.put('/api/teacher/lessons/:id', authenticateToken, async (req, res) => {
+  const { topic, notes, custom_price } = req.body;
+  try {
+    const result = await db.query(`
+      UPDATE lessons 
+      SET topic = $1, notes = $2
+      WHERE id = $3
+      RETURNING *
+    `, [topic || '', notes || '', req.params.id]);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Óra nem található' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Hiba az óra módosításakor' });
   }
 });
 

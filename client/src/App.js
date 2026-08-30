@@ -155,6 +155,12 @@ export default function App() {
   const [editingLessonId, setEditingLessonId] = useState(null);
   const [editLessonData, setEditLessonData] = useState({ topic: '', notes: '', custom_price: 0 });
 
+  const [editingTeacherId, setEditingTeacherId] = useState(null);
+  const [editTeacherData, setEditTeacherData] = useState({ full_name: '', email: '', phone: '', bio: '', subject: '', hourly_rate_50: 5000, hourly_rate_100: 9000, is_admin: false });
+
+  const [editingStudentId, setEditingStudentId] = useState(null);
+  const [editStudentData, setEditStudentData] = useState({ full_name: '', email: '', notes: '' });
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
@@ -185,7 +191,7 @@ export default function App() {
   const [aboutUsDesc, setAboutUsDesc] = useState('');
   const [aboutUsImage, setAboutUsImage] = useState(null);
 
-  const [newStudent, setNewStudent] = useState({ full_name: '', email: '', password: '' });
+  const [newStudent, setNewStudent] = useState({ full_name: '', email: '', password: '', notes: '' });
   const [newTeacher, setNewTeacher] = useState({ 
     full_name: '', 
     email: '', 
@@ -439,7 +445,7 @@ export default function App() {
       const data = await res.json();
       if (res.ok) setLogData(data);
     } catch (err) {
-      console.error('Hiba az admin log adatok lekérésekor:', err);
+      console.error('Hiba az admin log adatok lekéresekor:', err);
     }
   }, [token, user, logPeriodMode, logSelectedMonth, logSelectedWeek]);
 
@@ -574,7 +580,30 @@ export default function App() {
         body: JSON.stringify(newStudent)
       });
       if (!res.ok) throw new Error('Hiba a diák létrehozásakor');
-      setNewStudent({ full_name: '', email: '', password: '' });
+      setNewStudent({ full_name: '', email: '', password: '', notes: '' });
+      fetchTeacherData();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleStartEditStudent = (student) => {
+    setEditingStudentId(student.id);
+    setEditStudentData({
+      full_name: student.full_name || '',
+      email: student.email || '',
+      notes: student.notes || ''
+    });
+  };
+
+  const handleSaveEditStudent = async (studentId) => {
+    try {
+      const res = await fetch(`${API_BASE}/teacher/students/${studentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(editStudentData)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Hiba a diák adatainak frissítésekor');
+      setEditingStudentId(null);
       fetchTeacherData();
     } catch (err) { alert(err.message); }
   };
@@ -612,6 +641,35 @@ export default function App() {
         is_admin: false 
       });
       alert('Tanár sikeresen hozzáadva!');
+      fetchTeachers();
+      fetchScheduleTeachers();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleStartEditTeacher = (teacher) => {
+    setEditingTeacherId(teacher.id);
+    setEditTeacherData({
+      full_name: teacher.full_name || '',
+      email: teacher.email || '',
+      phone: teacher.phone || '',
+      bio: teacher.bio || '',
+      subject: teacher.subject || '',
+      hourly_rate_50: teacher.hourly_rate_50 || 5000,
+      hourly_rate_100: teacher.hourly_rate_100 || 9000,
+      is_admin: Boolean(teacher.is_admin)
+    });
+  };
+
+  const handleSaveEditTeacher = async (teacherId) => {
+    try {
+      const res = await fetch(`${API_BASE}/teacher/teachers/${teacherId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(editTeacherData)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Hiba a tanár adatainak frissítésekor');
+      setEditingTeacherId(null);
       fetchTeachers();
       fetchScheduleTeachers();
     } catch (err) { alert(err.message); }
@@ -1690,6 +1748,17 @@ export default function App() {
                     <input type="password" placeholder="••••••••" value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} style={ui.input} required />
                   </div>
                 </div>
+
+                <div style={ui.inputGroup}>
+                  <label style={ui.label}>MEGJEGYZÉS A DIÁKHOZ (OPCIONÁLIS)</label>
+                  <textarea 
+                    placeholder="Egyéni megjegyzés, szint, vállalt alkalmak stb." 
+                    value={newStudent.notes} 
+                    onChange={e => setNewStudent({...newStudent, notes: e.target.value})} 
+                    style={{ ...ui.input, height: '60px' }} 
+                  />
+                </div>
+
                 <button type="submit" style={ui.primaryBtn} className="btn-hover"><UserPlus size={18}/> Diák Regisztrálása</button>
               </form>
             </div>
@@ -1701,16 +1770,66 @@ export default function App() {
               ) : (
                 students.map(s => (
                   <div key={s.id} style={ui.glassCard} className="card-hover">
-                    <div style={ui.cardHeaderRow}>
-                      <div>
-                        <h4 style={ui.cardTitle}>{s.full_name}</h4>
-                        <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{s.email}</p>
+                    {editingStudentId === s.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                        <h4 style={{ color: '#34d399', margin: 0 }}>Diák Adatainak Szerkesztése (#{s.id})</h4>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>TELJES NÉV</label>
+                            <input 
+                              type="text" 
+                              value={editStudentData.full_name} 
+                              onChange={e => setEditStudentData({ ...editStudentData, full_name: e.target.value })} 
+                              style={ui.input} 
+                              required 
+                            />
+                          </div>
+
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>E-MAIL CÍM</label>
+                            <input 
+                              type="email" 
+                              value={editStudentData.email} 
+                              onChange={e => setEditStudentData({ ...editStudentData, email: e.target.value })} 
+                              style={ui.input} 
+                              required 
+                            />
+                          </div>
+                        </div>
+
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>MEGJEGYZÉS</label>
+                          <textarea 
+                            value={editStudentData.notes} 
+                            onChange={e => setEditStudentData({ ...editStudentData, notes: e.target.value })} 
+                            style={{ ...ui.input, height: '60px' }} 
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button onClick={() => handleSaveEditStudent(s.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={16}/> Mentés</button>
+                          <button onClick={() => setEditingStudentId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={16}/> Mégse</button>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <span style={ui.badge}>{s.total_lessons || 0} óra felvéve</span>
-                        <button onClick={() => handleDeleteStudent(s.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
+                    ) : (
+                      <div style={ui.cardHeaderRow}>
+                        <div>
+                          <h4 style={ui.cardTitle}>{s.full_name}</h4>
+                          <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{s.email}</p>
+                          {s.notes && (
+                            <p style={{ ...ui.cardDesc, color: '#a7f3d0', marginTop: '0.4rem' }}>
+                              <FileText size={14} /> Megjegyzés: {s.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={ui.badge}>{s.total_lessons || 0} óra felvéve</span>
+                          <button onClick={() => handleStartEditStudent(s)} style={ui.editBtn} className="btn-hover"><Edit size={16}/></button>
+                          <button onClick={() => handleDeleteStudent(s.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 ))
               )}
@@ -1778,18 +1897,120 @@ export default function App() {
             <div style={ui.gridGap}>
               {teachers.map(t => (
                 <div key={t.id} style={ui.glassCard} className="card-hover">
-                  <div style={ui.cardHeaderRow}>
-                    <div>
-                      <h4 style={ui.cardTitle}>{t.full_name} {t.is_admin ? <span style={{ ...ui.badge, background: 'rgba(234, 179, 8, 0.2)', color: '#facc15' }}>ADMIN</span> : null}</h4>
-                      <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{t.email} | {t.phone || 'Nincs tel.'}</p>
-                      <p style={{ color: '#34d399', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                        Óradíjak: <strong>50p:</strong> {t.hourly_rate_50 || 5000} Ft | <strong>100p:</strong> {t.hourly_rate_100 || 9000} Ft
-                      </p>
+                  {editingTeacherId === t.id ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      <h4 style={{ color: '#34d399', margin: 0 }}>Tanár Szerkesztése (#{t.id})</h4>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>TELJES NÉV</label>
+                          <input 
+                            type="text" 
+                            value={editTeacherData.full_name} 
+                            onChange={e => setEditTeacherData({ ...editTeacherData, full_name: e.target.value })} 
+                            style={ui.input} 
+                            required 
+                          />
+                        </div>
+
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>E-MAIL CÍM</label>
+                          <input 
+                            type="email" 
+                            value={editTeacherData.email} 
+                            onChange={e => setEditTeacherData({ ...editTeacherData, email: e.target.value })} 
+                            style={ui.input} 
+                            required 
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>TELEFONSZÁM</label>
+                          <input 
+                            type="text" 
+                            value={editTeacherData.phone} 
+                            onChange={e => setEditTeacherData({ ...editTeacherData, phone: e.target.value })} 
+                            style={ui.input} 
+                          />
+                        </div>
+
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>FŐ TANTÁRGY</label>
+                          <input 
+                            type="text" 
+                            value={editTeacherData.subject} 
+                            onChange={e => setEditTeacherData({ ...editTeacherData, subject: e.target.value })} 
+                            style={ui.input} 
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>ÓRADÍJ - 50 PERC (FT)</label>
+                          <input 
+                            type="number" 
+                            value={editTeacherData.hourly_rate_50} 
+                            onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_50: parseInt(e.target.value) || 0 })} 
+                            style={ui.input} 
+                          />
+                        </div>
+
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>ÓRADÍJ - 100 PERC (FT)</label>
+                          <input 
+                            type="number" 
+                            value={editTeacherData.hourly_rate_100} 
+                            onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0 })} 
+                            style={ui.input} 
+                          />
+                        </div>
+                      </div>
+
+                      <div style={ui.inputGroup}>
+                        <label style={ui.label}>BIO / BEMUTATKOZÁS</label>
+                        <textarea 
+                          value={editTeacherData.bio} 
+                          onChange={e => setEditTeacherData({ ...editTeacherData, bio: e.target.value })} 
+                          style={{ ...ui.input, height: '60px' }} 
+                        />
+                      </div>
+
+                      <label style={ui.checkboxLabel}>
+                        <input 
+                          type="checkbox" 
+                          checked={editTeacherData.is_admin} 
+                          onChange={e => setEditTeacherData({ ...editTeacherData, is_admin: e.target.checked })} 
+                          style={ui.checkbox} 
+                        />
+                        <span>Adminisztrátori jogosultság</span>
+                      </label>
+
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        <button onClick={() => handleSaveEditTeacher(t.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={16}/> Mentés</button>
+                        <button onClick={() => setEditingTeacherId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={16}/> Mégse</button>
+                      </div>
                     </div>
-                    {t.id !== user.id && (
-                      <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
-                    )}
-                  </div>
+                  ) : (
+                    <div style={ui.cardHeaderRow}>
+                      <div>
+                        <h4 style={ui.cardTitle}>{t.full_name} {t.is_admin ? <span style={{ ...ui.badge, background: 'rgba(234, 179, 8, 0.2)', color: '#facc15' }}>ADMIN</span> : null}</h4>
+                        <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{t.email} | {t.phone || 'Nincs tel.'}</p>
+                        <p style={{ color: '#34d399', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                          Szak: <strong>{t.subject || 'Nincs megadva'}</strong> | Óradíjak: <strong>50p:</strong> {t.hourly_rate_50 || 5000} Ft | <strong>100p:</strong> {t.hourly_rate_100 || 9000} Ft
+                        </p>
+                        {t.bio && <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginTop: '0.3rem' }}>{t.bio}</p>}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <button onClick={() => handleStartEditTeacher(t)} style={ui.editBtn} className="btn-hover"><Edit size={16}/></button>
+                        {t.id !== user.id && (
+                          <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -2060,33 +2281,37 @@ export default function App() {
                 <>
                   <div style={{ paddingBottom: '0.8rem', borderBottom: '1px solid rgba(52, 211, 153, 0.2)', marginBottom: '1rem' }}>
                     <h4 style={{ color: '#fff', margin: 0 }}>{selectedUser.full_name}</h4>
+                    <span style={{ fontSize: '0.8rem', color: '#34d399' }}>{selectedUser.role === 'teacher' ? 'Tanár' : 'Diák'}</span>
                   </div>
 
                   <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingRight: '0.5rem' }}>
                     {messages.map(m => {
                       const isMe = m.sender_id === user.id;
-                      const fileUrl = m.file_url ? (m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`) : null;
-
                       return (
                         <div 
                           key={m.id} 
                           style={{
                             alignSelf: isMe ? 'flex-end' : 'flex-start',
                             maxWidth: '70%',
-                            background: isMe ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(15, 35, 24, 0.8)',
-                            color: '#fff',
+                            background: isMe ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                            border: isMe ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: isMe ? '16px 16px 0px 16px' : '16px 16px 16px 0px',
                             padding: '0.8rem 1rem',
-                            borderRadius: '12px',
-                            border: isMe ? 'none' : '1px solid rgba(52, 211, 153, 0.2)'
+                            color: '#fff'
                           }}
                         >
-                          {m.content && <p style={{ margin: 0, fontSize: '0.95rem' }}>{m.content}</p>}
-                          {fileUrl && (
-                            <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#a7f3d0', fontSize: '0.85rem', marginTop: '0.4rem', textDecoration: 'underline' }}>
-                              <Paperclip size={14}/> Fájl letöltése
+                          {m.content && <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{m.content}</p>}
+                          {m.file_url && (
+                            <a 
+                              href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#34d399', marginTop: m.content ? '0.5rem' : 0, textDecoration: 'underline', fontSize: '0.85rem' }}
+                            >
+                              <Paperclip size={14} /> CSATOLMÁNY LETÖLTÉSE <Download size={14} />
                             </a>
                           )}
-                          <span style={{ display: 'block', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.3rem', textAlign: 'right' }}>
+                          <span style={{ display: 'block', textAlign: 'right', fontSize: '0.65rem', color: '#94a3b8', marginTop: '0.3rem' }}>
                             {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -2102,17 +2327,25 @@ export default function App() {
                       onChange={e => setNewMessage(e.target.value)} 
                       style={{ ...ui.input, flex: 1 }} 
                     />
-                    <label style={{ cursor: 'pointer', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
-                      <Paperclip size={18} color="#34d399"/>
+                    
+                    <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.08)', padding: '0.75rem', borderRadius: '10px', border: '1px solid rgba(52, 211, 153, 0.2)' }} className="btn-hover" title="Fájl csatolása">
+                      <Paperclip size={18} color={selectedFile ? '#34d399' : '#cbd5e1'} />
                       <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
                     </label>
-                    <button type="submit" style={ui.primaryBtnInline} className="btn-hover"><Send size={18}/></button>
+
+                    <button type="submit" style={{ ...ui.primaryBtnInline, padding: '0.8rem 1.2rem' }} className="btn-hover">
+                      <Send size={18} />
+                    </button>
                   </form>
-                  {selectedFile && <span style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '0.2rem' }}>Kiválasztott fájl: {selectedFile.name}</span>}
+                  {selectedFile && (
+                    <span style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '0.2rem' }}>
+                      Csatolt fájl: {selectedFile.name}
+                    </span>
+                  )}
                 </>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
-                  Válassz egy beszélgetést a bal oldali sávból.
+                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                  Válassz ki egy beszélgetést a bal oldali listából.
                 </div>
               )}
             </div>
@@ -2120,7 +2353,7 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} setUser={setUser} />
+          <Profile user={user} token={token} setUser={setUser} API_BASE={API_BASE} />
         )}
 
       </main>
