@@ -1222,14 +1222,31 @@ app.patch('/api/teacher/lessons/:id/paid', authenticateToken, async (req, res) =
   }
 });
 
+// BESZÉLGETÉSEK LEKÉRÉSE: Korlátozva, hogy a diákok kizárólag TANÁR vagy ADMIN felhasználókkal cseveghessenek!
 app.get('/api/conversations', authenticateToken, async (req, res) => {
   try {
-    const result = await db.query(`
-      SELECT DISTINCT u.id, u.full_name, u.email, u.role
-      FROM users u
-      WHERE u.id != $1
-      ORDER BY u.full_name ASC
-    `, [req.user.id]);
+    let query = '';
+    let params = [req.user.id];
+
+    if (req.user.role === 'student') {
+      // Diák esetén csak a tanárokat és az adminokat kérjük le
+      query = `
+        SELECT DISTINCT u.id, u.full_name, u.email, u.role
+        FROM users u
+        WHERE u.id != $1 AND (u.role = 'teacher' OR u.is_admin = true OR u.id = 1)
+        ORDER BY u.full_name ASC
+      `;
+    } else {
+      // Tanárok és adminok az összes többi felhasználóval cseveghetnek
+      query = `
+        SELECT DISTINCT u.id, u.full_name, u.email, u.role
+        FROM users u
+        WHERE u.id != $1
+        ORDER BY u.full_name ASC
+      `;
+    }
+
+    const result = await db.query(query, params);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: 'Hiba a beszélgetések lekérésekor' });
@@ -1250,9 +1267,25 @@ app.get('/api/messages/:userId', authenticateToken, async (req, res) => {
   }
 });
 
+// ÜZENET KÜLDÉSE: Backend védelem diákoknak
 app.post('/api/messages', authenticateToken, upload.single('file'), async (req, res) => {
   const { receiver_id, content } = req.body;
   try {
+    // Ha a küldő diák, ellenőrizzük, hogy a címzett tanár-e vagy admin-e
+    if (req.user.role === 'student') {
+      const receiverRes = await db.query('SELECT role, is_admin, id FROM users WHERE id = $1', [receiver_id]);
+      if (receiverRes.rows.length === 0) {
+        return res.status(404).json({ error: 'A megadott címzett nem található' });
+      }
+
+      const receiver = receiverRes.rows[0];
+      const isTeacherOrAdmin = receiver.role === 'teacher' || receiver.is_admin === true || receiver.id === 1;
+
+      if (!isTeacherOrAdmin) {
+        return res.status(403).json({ error: 'Diákok csak tanárokkal vagy adminisztrátorokkal cseveghetnek!' });
+      }
+    }
+
     const file_url = req.file ? `/uploads/${req.file.filename}` : null;
     const file_name = req.file ? req.file.originalname : null;
 
