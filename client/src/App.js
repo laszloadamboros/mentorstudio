@@ -4,7 +4,7 @@ import {
   Plus, Trash2, GraduationCap, Sparkles, ChevronRight, UserPlus, ShieldCheck,
   Megaphone, Pin, MessageSquare, Send, Search, CheckCircle2, AlertCircle, FileText,
   Users, CreditCard, KeyRound, ArrowLeft, Paperclip, Download, LogIn, MapPin, Layout,
-  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat
+  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat, Save, X
 } from 'lucide-react';
 import Profile from './profil';
 import ScheduleView from './ScheduleView';
@@ -79,6 +79,7 @@ const ui = {
   input: { background: 'rgba(5, 15, 10, 0.7)', border: '1px solid rgba(52, 211, 153, 0.25)', padding: '0.8rem 1rem', borderRadius: '10px', color: '#fff', fontSize: '0.95rem', outline: 'none' },
   primaryBtn: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '0.85rem 1.2rem', borderRadius: '10px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%' },
   primaryBtnInline: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.4rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  secondaryBtnInline: { background: 'rgba(255, 255, 255, 0.1)', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' },
   linkBtn: { background: 'none', border: 'none', color: '#34d399', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' },
   errorBadge: { background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.7rem', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
   successBadge: { background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', padding: '0.7rem', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
@@ -98,6 +99,7 @@ const ui = {
   cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#fff' },
   cardDesc: { color: '#cbd5e1', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' },
   deleteBtn: { background: 'rgba(239, 68, 68, 0.15)', border: 'none', color: '#f87171', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' },
+  editBtn: { background: 'rgba(52, 211, 153, 0.15)', border: 'none', color: '#34d399', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', marginRight: '0.5rem' },
   emptyText: { color: '#64748b', fontStyle: 'italic', padding: '1rem 0' },
   gridGap: { display: 'flex', flexDirection: 'column', gap: '1rem' },
   pinTag: { background: 'rgba(234, 179, 8, 0.2)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.4)', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.2rem' },
@@ -149,6 +151,10 @@ export default function App() {
   const [resetToken, setResetToken] = useState('');
   const [newResetPassword, setNewResetPassword] = useState('');
 
+  // Szerkesztési állapotok (Editing states)
+  const [editingLessonId, setEditingLessonId] = useState(null);
+  const [editLessonData, setEditLessonData] = useState({ topic: '', notes: '', custom_price: 0 });
+
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
@@ -199,6 +205,7 @@ export default function App() {
     end_time: '', 
     topic: '', 
     notes: '',
+    custom_price: '',
     is_recurring: false,
     repeat_weeks: 4
   });
@@ -627,14 +634,41 @@ export default function App() {
   const handleCreateLesson = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...newLesson,
+        custom_price: newLesson.custom_price ? parseFloat(newLesson.custom_price) : null
+      };
       const res = await fetch(`${API_BASE}/teacher/lessons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(newLesson)
+        body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error('Hiba az óra létrehozásakor');
-      setNewLesson({ student_id: '', subject: 'Matematika', start_time: '', end_time: '', topic: '', notes: '', is_recurring: false, repeat_weeks: 4 });
+      setNewLesson({ student_id: '', subject: 'Matematika', start_time: '', end_time: '', topic: '', notes: '', custom_price: '', is_recurring: false, repeat_weeks: 4 });
       fetchTeacherData();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleStartEditLesson = (lesson) => {
+    setEditingLessonId(lesson.id);
+    setEditLessonData({
+      topic: lesson.topic || '',
+      notes: lesson.notes || '',
+      custom_price: lesson.calculated_price || lesson.custom_price || 0
+    });
+  };
+
+  const handleSaveEditLesson = async (lessonId) => {
+    try {
+      const res = await fetch(`${API_BASE}/teacher/lessons/${lessonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(editLessonData)
+      });
+      if (!res.ok) throw new Error('Hiba a szerkesztés mentésekor');
+      setEditingLessonId(null);
+      if (user.role === 'teacher') fetchTeacherData(); else fetchStudentData();
+      if (activeTab === 'log') fetchAdminLogData();
     } catch (err) { alert(err.message); }
   };
 
@@ -1266,6 +1300,7 @@ export default function App() {
                 <h3 style={{ fontSize: '1.4rem', fontWeight: '700', margin: '0.5rem 0' }}>{todayLesson.subject}</h3>
                 <p style={ui.cardDesc}><BookOpen size={16}/> {todayLesson.topic || 'Tematika nincs megadva'}</p>
                 {todayLesson.notes && <p style={{ ...ui.cardDesc, color: '#94a3b8' }}><FileText size={16}/> Megjegyzés: {todayLesson.notes}</p>}
+                <p style={{ color: '#34d399', fontWeight: '700', marginTop: '0.5rem' }}>Óradíj: {(todayLesson.calculated_price || 0).toLocaleString('hu-HU')} Ft</p>
               </div>
             ) : (
               <div style={ui.glassCard}>
@@ -1286,6 +1321,7 @@ export default function App() {
                     </div>
                     <p style={ui.cardDesc}><BookOpen size={16}/> {l.topic || 'Tematika nincs megadva'}</p>
                     {l.notes && <p style={{ ...ui.cardDesc, color: '#94a3b8' }}><FileText size={16}/> Megjegyzés: {l.notes}</p>}
+                    <p style={{ color: '#34d399', fontWeight: '700', marginTop: '0.5rem' }}>Díj: {(l.calculated_price || 0).toLocaleString('hu-HU')} Ft</p>
                   </div>
                 ))
               )}
@@ -1303,6 +1339,7 @@ export default function App() {
                       <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
                     </div>
                     <p style={ui.cardDesc}><BookOpen size={16}/> {l.topic || 'Tematika nincs megadva'}</p>
+                    <p style={{ color: '#34d399', fontWeight: '700', marginTop: '0.5rem' }}>Díj: {(l.calculated_price || 0).toLocaleString('hu-HU')} Ft</p>
                   </div>
                 ))
               )}
@@ -1470,15 +1507,28 @@ export default function App() {
                   </div>
                 </div>
 
-                <div style={ui.inputGroup}>
-                  <label style={ui.label}>TÉMAKÖR / TEMATIKA</label>
-                  <input 
-                    type="text" 
-                    placeholder="Pl. Másodfokú egyenletek" 
-                    value={newLesson.topic} 
-                    onChange={e => setNewLesson({...newLesson, topic: e.target.value})} 
-                    style={ui.input} 
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div style={ui.inputGroup}>
+                    <label style={ui.label}>TÉMAKÖR / TEMATIKA</label>
+                    <input 
+                      type="text" 
+                      placeholder="Pl. Másodfokú egyenletek" 
+                      value={newLesson.topic} 
+                      onChange={e => setNewLesson({...newLesson, topic: e.target.value})} 
+                      style={ui.input} 
+                    />
+                  </div>
+
+                  <div style={ui.inputGroup}>
+                    <label style={ui.label}>EGYEDI ÓRADÍJ (FT) - Opcionális</label>
+                    <input 
+                      type="number" 
+                      placeholder="Üresen hagyva az egyéni alapérték töltődik" 
+                      value={newLesson.custom_price} 
+                      onChange={e => setNewLesson({...newLesson, custom_price: e.target.value})} 
+                      style={ui.input} 
+                    />
+                  </div>
                 </div>
 
                 <div style={ui.inputGroup}>
@@ -1491,7 +1541,6 @@ export default function App() {
                   ></textarea>
                 </div>
 
-                {/* Ismétlődő óra beállítása */}
                 <div style={{ background: 'rgba(5, 15, 10, 0.5)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(52, 211, 153, 0.2)', marginTop: '0.5rem' }}>
                   <label style={ui.checkboxLabel}>
                     <input 
@@ -1528,44 +1577,93 @@ export default function App() {
               </form>
             </div>
 
-            <h3 style={ui.sectionTitle}>Órák Listája & Fizetési Státuszok</h3>
+            <h3 style={ui.sectionTitle}>Órák Listája & Szerkesztése & Fizetés</h3>
             <div style={ui.gridGap}>
               {lessons.length === 0 ? (
                 <p style={ui.emptyText}>Még nincsenek kiírt órák.</p>
               ) : (
                 lessons.map(l => (
                   <div key={l.id} style={ui.glassCard} className="card-hover">
-                    <div style={ui.cardHeaderRow}>
-                      <div>
-                        <h4 style={ui.cardTitle}>{l.subject} - {l.student_name || 'Diák'}</h4>
-                        <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
+                    {editingLessonId === l.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                        <h4 style={{ color: '#34d399', margin: 0 }}>Óra Szerkesztése (#{l.id})</h4>
+                        
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>TÉMAKÖR</label>
+                          <input 
+                            type="text" 
+                            value={editLessonData.topic} 
+                            onChange={e => setEditLessonData({ ...editLessonData, topic: e.target.value })} 
+                            style={ui.input} 
+                          />
+                        </div>
+
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>MEGJEGYZÉS</label>
+                          <textarea 
+                            value={editLessonData.notes} 
+                            onChange={e => setEditLessonData({ ...editLessonData, notes: e.target.value })} 
+                            style={{ ...ui.input, height: '60px' }} 
+                          />
+                        </div>
+
+                        <div style={ui.inputGroup}>
+                          <label style={ui.label}>ÓRADÍJ (FT)</label>
+                          <input 
+                            type="number" 
+                            value={editLessonData.custom_price} 
+                            onChange={e => setEditLessonData({ ...editLessonData, custom_price: parseFloat(e.target.value) || 0 })} 
+                            style={ui.input} 
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button onClick={() => handleSaveEditLesson(l.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={16}/> Mentés</button>
+                          <button onClick={() => setEditingLessonId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={16}/> Mégse</button>
+                        </div>
                       </div>
-                      <button onClick={() => handleDeleteLesson(l.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
-                    </div>
+                    ) : (
+                      <>
+                        <div style={ui.cardHeaderRow}>
+                          <div>
+                            <h4 style={ui.cardTitle}>{l.subject} - {l.student_name || 'Diák'}</h4>
+                            <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
+                          </div>
+                          <div>
+                            <button onClick={() => handleStartEditLesson(l)} style={ui.editBtn} className="btn-hover"><Edit size={16}/></button>
+                            <button onClick={() => handleDeleteLesson(l.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
+                          </div>
+                        </div>
 
-                    <p style={ui.cardDesc}><BookOpen size={16}/> {l.topic || 'Nincs leírás'}</p>
-                    {l.notes && <p style={{ ...ui.cardDesc, color: '#94a3b8' }}><FileText size={16}/> Megjegyzés: {l.notes}</p>}
+                        <p style={ui.cardDesc}><BookOpen size={16}/> {l.topic || 'Nincs leírás'}</p>
+                        {l.notes && <p style={{ ...ui.cardDesc, color: '#94a3b8' }}><FileText size={16}/> Megjegyzés: {l.notes}</p>}
+                        
+                        <p style={{ color: '#34d399', fontWeight: '700', marginTop: '0.4rem', fontSize: '0.9rem' }}>
+                          Beállított díj: {(l.calculated_price || 0).toLocaleString('hu-HU')} Ft
+                        </p>
 
-                    <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#a7f3d0', fontWeight: '700' }}>Fizetési Státusz:</span>
-                      <select 
-                        value={l.payment_status || (l.is_paid ? 'cash' : 'unpaid')} 
-                        onChange={e => handlePaymentChange(l.id, e.target.value)}
-                        style={{
-                          ...ui.input,
-                          padding: '0.4rem 0.8rem',
-                          fontSize: '0.85rem',
-                          background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.2)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
-                          borderColor: l.payment_status === 'settled' ? '#3b82f6' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#10b981' : '#ef4444'),
-                          color: '#fff'
-                        }}
-                      >
-                        <option value="unpaid" style={{ background: '#0f2318' }}>❌ Kifizetetlen</option>
-                        <option value="cash" style={{ background: '#0f2318' }}>💵 Készpénz</option>
-                        <option value="transfer" style={{ background: '#0f2318' }}>🏦 Átutalás</option>
-                        <option value="settled" style={{ background: '#0f2318' }}>🤝 Rendezve (Jutalék mentes)</option>
-                      </select>
-                    </div>
+                        <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.85rem', color: '#a7f3d0', fontWeight: '700' }}>Fizetési Státusz:</span>
+                          <select 
+                            value={l.payment_status || (l.is_paid ? 'cash' : 'unpaid')} 
+                            onChange={e => handlePaymentChange(l.id, e.target.value)}
+                            style={{
+                              ...ui.input,
+                              padding: '0.4rem 0.8rem',
+                              fontSize: '0.85rem',
+                              background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.2)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
+                              borderColor: l.payment_status === 'settled' ? '#3b82f6' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#10b981' : '#ef4444'),
+                              color: '#fff'
+                            }}
+                          >
+                            <option value="unpaid" style={{ background: '#0f2318' }}>❌ Kifizetetlen</option>
+                            <option value="cash" style={{ background: '#0f2318' }}>💵 Készpénz</option>
+                            <option value="transfer" style={{ background: '#0f2318' }}>🏦 Átutalás</option>
+                            <option value="settled" style={{ background: '#0f2318' }}>🤝 Rendezve (Jutalék mentes)</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))
               )}
@@ -1700,7 +1798,6 @@ export default function App() {
 
         {(user?.is_admin || user?.id === 1) && activeTab === 'log' && (
           <div style={ui.glassCard} className="fade-in-up">
-            {/* Fejléc és Szűrők */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }} className="no-print">
               <h3 style={ui.sectionTitle}>
                 <FileSpreadsheet size={22} color="#34d399"/> Ügyviteli Napló & Összesített Statisztikák
@@ -1733,7 +1830,6 @@ export default function App() {
             </div>
 
             <div id="printable-log-section">
-              {/* Kiemelt Összegző Kártyák */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.2rem', marginBottom: '2rem' }}>
                 <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%)', padding: '1.3rem', borderRadius: '16px', border: '1px solid rgba(52, 211, 153, 0.4)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1771,7 +1867,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 1. Kinek mikor volt órája */}
               <div style={{ marginBottom: '2.5rem' }}>
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <Clock size={18}/> Órák részletes időrendi naplója (Időszak)
@@ -1816,10 +1911,9 @@ export default function App() {
                 )}
               </div>
 
-              {/* 2. Tanári Óraszámok és Kimutatások */}
               <div style={{ marginBottom: '2.5rem' }}>
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Users size={18}/> Tanári Teljesítmények (Melyik tanár hány órát tartott)
+                  <Users size={18}/> Tanári Teljesítmények
                 </h4>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={ui.table}>
@@ -1829,8 +1923,8 @@ export default function App() {
                         <th style={ui.th}>50p ÓRADÍJ</th>
                         <th style={ui.th}>100p ÓRADÍJ</th>
                         <th style={ui.th}>Időszaki Óraszám</th>
-                        <th style={ui.th}>Göngyölített (Összes) Óra</th>
-                        <th style={ui.th}>Időszaki Generált Forgalom</th>
+                        <th style={ui.th}>Göngyölített Óra</th>
+                        <th style={ui.th}>Időszaki Forgalom</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1845,27 +1939,15 @@ export default function App() {
                             <td style={{ ...ui.td, color: '#34d399', fontWeight: '700' }}>{(t.period_revenue || 0).toLocaleString('hu-HU')} Ft</td>
                           </tr>
                         ))
-                      ) : (
-                        teachers.map(t => (
-                          <tr key={t.id}>
-                            <td style={{ ...ui.td, color: '#fff', fontWeight: '700' }}>{t.full_name}</td>
-                            <td style={ui.td}>{(t.hourly_rate_50 || 5000).toLocaleString('hu-HU')} Ft</td>
-                            <td style={ui.td}>{(t.hourly_rate_100 || 9000).toLocaleString('hu-HU')} Ft</td>
-                            <td style={ui.td}><strong>0</strong> óra</td>
-                            <td style={ui.td}>0 óra</td>
-                            <td style={{ ...ui.td, color: '#34d399', fontWeight: '700' }}>0 Ft</td>
-                          </tr>
-                        ))
-                      )}
+                      ) : null}
                     </tbody>
                   </table>
                 </div>
               </div>
 
-              {/* 3. Diákok Óraszámai & Fizetései */}
               <div style={{ marginBottom: '2.5rem' }}>
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <GraduationCap size={18}/> Diákok Órái & Befizetései (Időszakra & Göngyölítve)
+                  <GraduationCap size={18}/> Diákok Órái & Befizetései
                 </h4>
                 <div style={{ overflowX: 'auto' }}>
                   <table style={ui.table}>
@@ -1873,9 +1955,9 @@ export default function App() {
                       <tr>
                         <th style={ui.th}>Diák Neve</th>
                         <th style={ui.th}>Időszaki Órák</th>
-                        <th style={ui.th}>Időszaki Befizetett Összeg</th>
-                        <th style={ui.th}>Göngyölített (Összes) Óra</th>
-                        <th style={ui.th}>Göngyölített Összes Befizetés</th>
+                        <th style={ui.th}>Időszaki Befizetés</th>
+                        <th style={ui.th}>Göngyölített Óra</th>
+                        <th style={ui.th}>Összes Befizetés</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1895,8 +1977,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 4. Teljes Mentorstúdió Forgalma */}
-              <div style={{ marginBottom: '2.5rem' }}>
+              <div>
                 <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <BarChart3 size={18}/> Mentorstúdió Pénzügyi Összesítője
                 </h4>
@@ -1946,55 +2027,6 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
-              {/* 5. Órák kezelése és fizetési státuszok állítása */}
-              <div className="no-print">
-                <h4 style={{ ...ui.cardTitle, color: '#34d399', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <CheckSquare size={18}/> Időszaki Órák Kezelése & Fizetési Státuszok Állítása
-                </h4>
-                <div style={ui.gridGap}>
-                  {!logData?.lessons || logData.lessons.length === 0 ? (
-                    <p style={ui.emptyText}>Ebben az időszakban nincsenek órák rögzítve.</p>
-                  ) : (
-                    logData.lessons.map(l => (
-                      <div key={l.id} style={ui.glassCard} className="card-hover">
-                        <div style={ui.cardHeaderRow}>
-                          <div>
-                            <h4 style={ui.cardTitle}>{l.subject} - {l.student_name || 'Diák'} ({l.teacher_name || 'Tanár'})</h4>
-                            <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
-                          </div>
-                          <button onClick={() => handleDeleteLesson(l.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
-                        </div>
-
-                        <p style={ui.cardDesc}><BookOpen size={16}/> {l.topic || 'Nincs leírás'}</p>
-                        {l.notes && <p style={{ ...ui.cardDesc, color: '#94a3b8' }}><FileText size={16}/> Megjegyzés: {l.notes}</p>}
-
-                        <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.85rem', color: '#a7f3d0', fontWeight: '700' }}>Fizetési Státusz:</span>
-                          <select 
-                            value={l.payment_status || (l.is_paid ? 'cash' : 'unpaid')} 
-                            onChange={e => handlePaymentChange(l.id, e.target.value)}
-                            style={{
-                              ...ui.input,
-                              padding: '0.4rem 0.8rem',
-                              fontSize: '0.85rem',
-                              background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.2)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'),
-                              borderColor: l.payment_status === 'settled' ? '#3b82f6' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#10b981' : '#ef4444'),
-                              color: '#fff'
-                            }}
-                          >
-                            <option value="unpaid" style={{ background: '#0f2318' }}>❌ Kifizetetlen</option>
-                            <option value="cash" style={{ background: '#0f2318' }}>💵 Készpénz</option>
-                            <option value="transfer" style={{ background: '#0f2318' }}>🏦 Átutalás</option>
-                            <option value="settled" style={{ background: '#0f2318' }}>🤝 Rendezve (Jutalék mentes)</option>
-                          </select>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
             </div>
           </div>
         )}
@@ -2043,25 +2075,18 @@ export default function App() {
                             maxWidth: '70%',
                             background: isMe ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(15, 35, 24, 0.8)',
                             color: '#fff',
-                            padding: '0.75rem 1rem',
-                            borderRadius: isMe ? '16px 16px 0px 16px' : '16px 16px 16px 0px',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                            padding: '0.8rem 1rem',
+                            borderRadius: '12px',
+                            border: isMe ? 'none' : '1px solid rgba(52, 211, 153, 0.2)'
                           }}
                         >
-                          {m.content && <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4' }}>{m.content}</p>}
+                          {m.content && <p style={{ margin: 0, fontSize: '0.95rem' }}>{m.content}</p>}
                           {fileUrl && (
-                            <div style={{ marginTop: '0.5rem' }}>
-                              <a 
-                                href={fileUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                style={{ color: isMe ? '#e2e8f0' : '#34d399', textDecoration: 'underline', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                              >
-                                <Paperclip size={14} /> {m.file_name || 'Csatolt fájl letöltése'}
-                              </a>
-                            </div>
+                            <a href={fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#a7f3d0', fontSize: '0.85rem', marginTop: '0.4rem', textDecoration: 'underline' }}>
+                              <Paperclip size={14}/> Fájl letöltése
+                            </a>
                           )}
-                          <span style={{ display: 'block', fontSize: '0.65rem', marginTop: '0.4rem', opacity: 0.8, textAlign: 'right' }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)', marginTop: '0.3rem', textAlign: 'right' }}>
                             {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
@@ -2070,33 +2095,24 @@ export default function App() {
                   </div>
 
                   <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center' }}>
-                    <label style={{ cursor: 'pointer', padding: '0.6rem', background: 'rgba(52, 211, 153, 0.15)', borderRadius: '8px', color: '#34d399', display: 'flex', alignItems: 'center' }}>
-                      <Paperclip size={18} />
-                      <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
-                    </label>
-
-                    {selectedFile && (
-                      <span style={{ fontSize: '0.75rem', color: '#34d399', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {selectedFile.name}
-                      </span>
-                    )}
-
                     <input 
                       type="text" 
-                      placeholder="Írj egy üzenetet..." 
+                      placeholder="Írj üzenetet..." 
                       value={newMessage} 
                       onChange={e => setNewMessage(e.target.value)} 
                       style={{ ...ui.input, flex: 1 }} 
                     />
-
-                    <button type="submit" style={{ ...ui.primaryBtnInline, padding: '0.7rem 1.2rem' }} className="btn-hover">
-                      <Send size={16} /> Küldés
-                    </button>
+                    <label style={{ cursor: 'pointer', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
+                      <Paperclip size={18} color="#34d399"/>
+                      <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                    </label>
+                    <button type="submit" style={ui.primaryBtnInline} className="btn-hover"><Send size={18}/></button>
                   </form>
+                  {selectedFile && <span style={{ fontSize: '0.75rem', color: '#34d399', marginTop: '0.2rem' }}>Kiválasztott fájl: {selectedFile.name}</span>}
                 </>
               ) : (
-                <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                  Válassz ki egy beszélgetést a bal oldali sávból.
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+                  Válassz egy beszélgetést a bal oldali sávból.
                 </div>
               )}
             </div>
@@ -2104,8 +2120,9 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} API_BASE={API_BASE} onUserUpdate={(updatedUser) => setUser(updatedUser)} />
+          <Profile user={user} token={token} setUser={setUser} />
         )}
+
       </main>
     </div>
   );

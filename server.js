@@ -50,17 +50,14 @@ const db = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// Óradíj kiszámítása
+// Óradíj kiszámítása - Javítva: Ha meg van adva egyedi érték, az jelenik meg!
 const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
   const start = new Date(startTime);
   const end = new Date(endTime);
   const diffMinutes = Math.round((end - start) / (1000 * 60));
 
-  let default50 = isAdmin ? 7000 : 5000;
-  let default100 = isAdmin ? 12000 : 9000;
-
-  const r50 = Number(rate50) || default50;
-  const r100 = Number(rate100) || default100;
+  let r50 = rate50 !== null && rate50 !== undefined ? Number(rate50) : (isAdmin ? 7000 : 5000);
+  let r100 = rate100 !== null && rate100 !== undefined ? Number(rate100) : (isAdmin ? 12000 : 9000);
 
   return diffMinutes <= 60 ? r50 : r100;
 };
@@ -532,8 +529,11 @@ app.get('/api/profile', authenticateToken, async (req, res) => {
 app.put('/api/profile', authenticateToken, async (req, res) => {
   const { full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, password } = req.body;
   try {
+    let r50 = hourly_rate_50 !== undefined && hourly_rate_50 !== '' ? parseInt(hourly_rate_50) : 5000;
+    let r100 = hourly_rate_100 !== undefined && hourly_rate_100 !== '' ? parseInt(hourly_rate_100) : 9000;
+
     let query = 'UPDATE users SET full_name = $1, email = $2, phone = $3, bio = $4, subject = $5, hourly_rate_50 = $6, hourly_rate_100 = $7';
-    let params = [full_name, email, phone, bio, subject, hourly_rate_50 || 5000, hourly_rate_100 || 9000];
+    let params = [full_name, email, phone, bio, subject, r50, r100];
 
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -689,7 +689,7 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
     
     const lessons = result.rows.map(l => ({
       ...l,
-      calculated_price: l.hourly_rate_50 ? calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin) : undefined
+      calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, l.is_admin)
     }));
 
     res.json(lessons);
@@ -819,11 +819,11 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
 app.get('/api/teacher/students', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(`
-      SELECT s.id, s.full_name, s.email, COUNT(l.id) AS total_lessons
+      SELECT s.id, s.full_name, s.email, s.phone, COUNT(l.id) AS total_lessons
       FROM users s
       LEFT JOIN lessons l ON s.id = l.student_id
       WHERE s.role = 'student'
-      GROUP BY s.id, s.full_name, s.email
+      GROUP BY s.id, s.full_name, s.email, s.phone
       ORDER BY s.full_name ASC
     `);
     res.json(result.rows);
@@ -833,20 +833,51 @@ app.get('/api/teacher/students', authenticateToken, async (req, res) => {
 });
 
 app.post('/api/teacher/students', authenticateToken, async (req, res) => {
-  const { full_name, email, password } = req.body;
+  const { full_name, email, password, phone } = req.body;
   try {
     if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Nincs jogosultságod' });
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.query(`
-      INSERT INTO users (full_name, email, password_hash, role)
-      VALUES ($1, $2, $3, 'student')
-      RETURNING id, full_name, email
-    `, [full_name, email, hashedPassword]);
+      INSERT INTO users (full_name, email, password_hash, role, phone)
+      VALUES ($1, $2, $3, 'student', $4)
+      RETURNING id, full_name, email, phone
+    `, [full_name, email, hashedPassword, phone || '']);
 
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Hiba a diák létrehozásakor (lehet létezik már az e-mail)' });
+  }
+});
+
+// ÚJ: Diák szerkesztése API ENDPOINT
+app.put('/api/teacher/students/:id', authenticateToken, async (req, res) => {
+  const { full_name, email, phone, password } = req.body;
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ error: 'Nincs jogosultságod' });
+    }
+
+    let query = `UPDATE users SET full_name = $1, email = $2, phone = $3`;
+    let params = [full_name, email, phone || ''];
+
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query += `, password_hash = $4 WHERE id = $5 AND role = 'student' RETURNING id, full_name, email, phone`;
+      params.push(hashedPassword, req.params.id);
+    } else {
+      query += ` WHERE id = $4 AND role = 'student' RETURNING id, full_name, email, phone`;
+      params.push(req.params.id);
+    }
+
+    const result = await db.query(query, params);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Diák nem található' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: 'Hiba a diák adatainak frissítésekor: ' + err.message });
   }
 });
 
@@ -869,11 +900,14 @@ app.post('/api/teacher/teachers', authenticateToken, async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let r50 = hourly_rate_50 !== undefined && hourly_rate_50 !== '' ? parseInt(hourly_rate_50) : 5000;
+    let r100 = hourly_rate_100 !== undefined && hourly_rate_100 !== '' ? parseInt(hourly_rate_100) : 9000;
+
     const result = await db.query(`
       INSERT INTO users (full_name, email, password_hash, role, phone, bio, subject, is_admin, hourly_rate_50, hourly_rate_100)
       VALUES ($1, $2, $3, 'teacher', $4, $5, $6, $7, $8, $9)
       RETURNING id, full_name, email, subject, is_admin, hourly_rate_50, hourly_rate_100
-    `, [full_name, email, hashedPassword, phone || '', bio || '', subject || 'Matematika', is_admin || false, hourly_rate_50 || 5000, hourly_rate_100 || 9000]);
+    `, [full_name, email, hashedPassword, phone || '', bio || '', subject || 'Matematika', is_admin || false, r50, r100]);
 
     res.json(result.rows[0]);
   } catch (err) {
@@ -888,11 +922,14 @@ app.put('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Csak admin szerkesztheti a tanárok adatait!' });
     }
 
+    let r50 = hourly_rate_50 !== undefined && hourly_rate_50 !== '' ? parseInt(hourly_rate_50) : 5000;
+    let r100 = hourly_rate_100 !== undefined && hourly_rate_100 !== '' ? parseInt(hourly_rate_100) : 9000;
+
     let query = `
       UPDATE users 
       SET full_name = $1, email = $2, phone = $3, bio = $4, subject = $5, hourly_rate_50 = $6, hourly_rate_100 = $7, is_admin = $8
     `;
-    let params = [full_name, email, phone || '', bio || '', subject || '', hourly_rate_50 || 5000, hourly_rate_100 || 9000, is_admin || false];
+    let params = [full_name, email, phone || '', bio || '', subject || '', r50, r100, is_admin || false];
 
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -937,7 +974,6 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
     const baseEnd = new Date(end_time);
 
     if (is_recurring) {
-      // Ha ismétlődő, legeneráljuk az adott év végéig minden azonos napra/időpontra
       const targetYear = baseStart.getFullYear();
       let currentStart = new Date(baseStart);
       let currentEnd = new Date(baseEnd);
@@ -948,7 +984,6 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
           end: new Date(currentEnd).toISOString()
         });
 
-        // 7 napot adunk hozzá a következő héthez
         currentStart.setDate(currentStart.getDate() + 7);
         currentEnd.setDate(currentEnd.getDate() + 7);
       }
@@ -972,7 +1007,6 @@ app.post('/api/teacher/lessons', authenticateToken, async (req, res) => {
 
     const firstLesson = insertedLessons[0];
 
-    // E-mail küldés HTTP API alapon
     try {
       const studentRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [student_id]);
       const teacherRes = await db.query('SELECT email, full_name FROM users WHERE id = $1', [req.user.id]);
