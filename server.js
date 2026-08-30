@@ -159,7 +159,7 @@ const authenticateToken = (req, res, next) => {
 
 const getAdminEmails = async () => {
   try {
-    const adminRes = await db.query("SELECT email FROM users WHERE is_admin = true OR id = 1");
+    const adminRes = await db.query("SELECT email FROM users WHERE is_admin = true OR id = 1 OR email = 'kornya.kms@gmail.com'");
     return adminRes.rows.map(row => row.email).filter(Boolean);
   } catch (e) {
     console.error("Hiba az admin e-mailek lekérésekor:", e);
@@ -192,6 +192,7 @@ const sendWeeklyUnpaidReport = async () => {
       SELECT 
         t.id AS teacher_id,
         t.full_name AS teacher_name,
+        t.email AS teacher_email,
         t.is_admin,
         t.hourly_rate_50,
         t.hourly_rate_100,
@@ -220,7 +221,7 @@ const sendWeeklyUnpaidReport = async () => {
 
     lessonsForCommission.rows.forEach(row => {
       const tId = row.teacher_id;
-      const isAdmin = Boolean(row.is_admin) || tId === 1;
+      const isAdmin = Boolean(row.is_admin) || tId === 1 || row.teacher_email === 'kornya.kms@gmail.com';
 
       if (!teacherCommissions[tId]) {
         teacherCommissions[tId] = {
@@ -408,7 +409,7 @@ app.put('/api/landing', authenticateToken, upload.fields([
   { name: 'logo_image', maxCount: 1 }
 ]), async (req, res) => {
   try {
-    if (!req.user.is_admin && req.user.id !== 1) {
+    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
       return res.status(403).json({ error: 'Csak admin módosíthatja a kezdőlapot' });
     }
 
@@ -453,7 +454,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!validPassword) return res.status(400).json({ error: 'Hibás e-mail vagy jelszó' });
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, is_admin: user.is_admin },
+      { id: user.id, email: user.email, role: user.role, is_admin: user.is_admin || user.email === 'kornya.kms@gmail.com' },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -465,7 +466,7 @@ app.post('/api/auth/login', async (req, res) => {
         full_name: user.full_name,
         email: user.email,
         role: user.role,
-        is_admin: user.is_admin,
+        is_admin: user.is_admin || user.email === 'kornya.kms@gmail.com',
         phone: user.phone,
         bio: user.bio,
         subject: user.subject,
@@ -691,19 +692,19 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
       const { teacher_id } = req.query;
       let targetTeacherId = req.user.id;
 
-      if ((req.user.is_admin || req.user.id === 1) && teacher_id) {
+      if ((req.user.is_admin || req.user.id === 1 || req.user.email === 'kornya.kms@gmail.com') && teacher_id) {
         targetTeacherId = teacher_id;
       }
 
       query = `
         SELECT l.*, s.full_name AS student_name, s.email AS student_email,
-               t.full_name AS teacher_name, t.hourly_rate_50, t.hourly_rate_100, t.is_admin
+               t.full_name AS teacher_name, t.email AS teacher_email, t.hourly_rate_50, t.hourly_rate_100, t.is_admin
         FROM lessons l
         LEFT JOIN users s ON l.student_id = s.id
         LEFT JOIN users t ON l.teacher_id = t.id
       `;
 
-      if (!(req.user.is_admin || req.user.id === 1) || teacher_id) {
+      if (!(req.user.is_admin || req.user.id === 1 || req.user.email === 'kornya.kms@gmail.com') || teacher_id) {
         query += ` WHERE l.teacher_id = $1`;
         params.push(targetTeacherId);
       }
@@ -723,7 +724,7 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
     const result = await db.query(query, params);
     
     const lessons = result.rows.map(l => {
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       return {
         ...l,
         calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher),
@@ -749,7 +750,7 @@ app.get('/api/teachers', authenticateToken, async (req, res) => {
 
 app.get('/api/schedule/teachers', authenticateToken, async (req, res) => {
   try {
-    if (!req.user.is_admin && req.user.id !== 1) {
+    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
       return res.status(403).json({ error: 'Nincs jogosultságod' });
     }
     const result = await db.query("SELECT id, full_name, email FROM users WHERE role = 'teacher' ORDER BY full_name ASC");
@@ -824,20 +825,20 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
     const { teacher_id } = req.query;
     let targetTeacherId = req.user.id;
 
-    if ((req.user.is_admin || req.user.id === 1) && teacher_id) {
+    if ((req.user.is_admin || req.user.id === 1 || req.user.email === 'kornya.kms@gmail.com') && teacher_id) {
       targetTeacherId = teacher_id;
     }
 
     let query = `
       SELECT l.*, s.full_name AS student_name, s.email AS student_email,
-             t.full_name AS teacher_name, t.hourly_rate_50, t.hourly_rate_100, t.is_admin
+             t.full_name AS teacher_name, t.email AS teacher_email, t.hourly_rate_50, t.hourly_rate_100, t.is_admin
       FROM lessons l
       LEFT JOIN users s ON l.student_id = s.id
       LEFT JOIN users t ON l.teacher_id = t.id
     `;
     let params = [];
 
-    if (!(req.user.is_admin || req.user.id === 1) || teacher_id) {
+    if (!(req.user.is_admin || req.user.id === 1 || req.user.email === 'kornya.kms@gmail.com') || teacher_id) {
       query += ` WHERE l.teacher_id = $1`;
       params.push(targetTeacherId);
     }
@@ -846,7 +847,7 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
 
     const result = await db.query(query, params);
     const lessonsWithCalculations = result.rows.map(l => {
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       return {
         ...l,
         calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher),
@@ -891,7 +892,7 @@ app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
     }
 
     const lessonsRes = await db.query(`
-      SELECT l.*, t.hourly_rate_50, t.hourly_rate_100, t.is_admin, s.full_name AS student_name
+      SELECT l.*, t.hourly_rate_50, t.hourly_rate_100, t.is_admin, t.email AS teacher_email, s.full_name AS student_name
       FROM lessons l
       JOIN users t ON l.teacher_id = t.id
       LEFT JOIN users s ON l.student_id = s.id
@@ -903,7 +904,7 @@ app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
     let totalCutPayable = 0;
 
     const lessonsCalculated = lessonsRes.rows.map(l => {
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       const grossPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
       const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
       const netEarnings = grossPrice - adminCut;
@@ -922,7 +923,7 @@ app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
     const netEarnings = totalGrossEarnings - totalCutPayable;
 
     res.json({
-      is_admin: req.user.is_admin,
+      is_admin: req.user.is_admin || req.user.email === 'kornya.kms@gmail.com',
       period: period || 'month',
       lessons: lessonsCalculated,
       total_lessons: lessonsCalculated.length,
@@ -1014,7 +1015,7 @@ app.delete('/api/teacher/students/:id', authenticateToken, async (req, res) => {
 app.post('/api/teacher/teachers', authenticateToken, async (req, res) => {
   const { full_name, email, password, phone, bio, subject, is_admin, hourly_rate_50, hourly_rate_100 } = req.body;
   try {
-    if (!req.user.is_admin && req.user.id !== 1) {
+    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
       return res.status(403).json({ error: 'Csak adminisztrátor hozhat létre új tanárt!' });
     }
 
@@ -1038,7 +1039,7 @@ app.post('/api/teacher/teachers', authenticateToken, async (req, res) => {
 app.put('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   const { full_name, email, phone, bio, subject, hourly_rate_50, hourly_rate_100, is_admin, password } = req.body;
   try {
-    if (!req.user.is_admin && req.user.id !== 1) {
+    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
       return res.status(403).json({ error: 'Csak admin szerkesztheti a tanárok adatait!' });
     }
 
@@ -1073,7 +1074,7 @@ app.put('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/teacher/teachers/:id', authenticateToken, async (req, res) => {
   try {
-    if (!req.user.is_admin && req.user.id !== 1) {
+    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
       return res.status(403).json({ error: 'Csak admin törölhet tanárt!' });
     }
     await db.query("DELETE FROM users WHERE id = $1 AND role = 'teacher'", [req.params.id]);
@@ -1260,7 +1261,7 @@ app.get('/api/conversations', authenticateToken, async (req, res) => {
       query = `
         SELECT DISTINCT u.id, u.full_name, u.email, u.role
         FROM users u
-        WHERE u.id != $1 AND (u.role = 'teacher' OR u.is_admin = true OR u.id = 1)
+        WHERE u.id != $1 AND (u.role = 'teacher' OR u.is_admin = true OR u.id = 1 OR u.email = 'kornya.kms@gmail.com')
         ORDER BY u.full_name ASC
       `;
     } else {
@@ -1297,13 +1298,13 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
   const { receiver_id, content } = req.body;
   try {
     if (req.user.role === 'student') {
-      const receiverRes = await db.query('SELECT role, is_admin, id FROM users WHERE id = $1', [receiver_id]);
+      const receiverRes = await db.query('SELECT role, is_admin, email, id FROM users WHERE id = $1', [receiver_id]);
       if (receiverRes.rows.length === 0) {
         return res.status(404).json({ error: 'A megadott címzett nem található' });
       }
 
       const receiver = receiverRes.rows[0];
-      const isTeacherOrAdmin = receiver.role === 'teacher' || receiver.is_admin === true || receiver.id === 1;
+      const isTeacherOrAdmin = receiver.role === 'teacher' || receiver.is_admin === true || receiver.id === 1 || receiver.email === 'kornya.kms@gmail.com';
 
       if (!isTeacherOrAdmin) {
         return res.status(403).json({ error: 'Diákok csak tanárokkal vagy adminisztrátorokkal cseveghetnek!' });
@@ -1327,7 +1328,7 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
 
 app.get('/api/admin/log', authenticateToken, async (req, res) => {
   try {
-    if (!req.user.is_admin && req.user.id !== 1) {
+    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
       return res.status(403).json({ error: 'Csak adminisztrátor tekintheti meg a naplót!' });
     }
 
@@ -1372,6 +1373,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
         l.is_paid,
         l.is_recurring,
         t.full_name AS teacher_name,
+        t.email AS teacher_email,
         t.hourly_rate_50,
         t.hourly_rate_100,
         t.is_admin,
@@ -1385,7 +1387,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
     `, teacher_id ? [teacher_id] : []);
 
     const allLessons = allLessonsRes.rows.map(l => {
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       const calculatedPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
       const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
 
@@ -1412,7 +1414,7 @@ app.get('/api/admin/log', authenticateToken, async (req, res) => {
 
     allLessons.forEach(l => {
       const price = l.calculated_price;
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1;
+      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       const cut = l.admin_cut;
 
       const isCash = l.payment_status === 'cash';
