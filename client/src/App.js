@@ -5,7 +5,7 @@ import {
   Megaphone, Pin, MessageSquare, Send, Search, CheckCircle2, AlertCircle, FileText,
   Users, CreditCard, KeyRound, ArrowLeft, Paperclip, Download, LogIn, MapPin, Layout,
   FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat, Save, X, Calculator, School, ChevronDown,
-  Building2, Briefcase, Award, ArrowUpRight
+  Building2, Briefcase, Award, ArrowUpRight, ArrowRight, Shield, Activity
 } from 'lucide-react';
 import Profile from './profil';
 import ScheduleView from './ScheduleView';
@@ -28,37 +28,80 @@ const formatLessonTime = (startTime, endTime) => {
 };
 
 const animations = `
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: #030705;
+    color: #e2e8f0;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono-font {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
+
   .fade-in { animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   
-  .btn-hover { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-  .btn-hover:hover { transform: translateY(-1px); filter: brightness(1.08); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15); }
+  .btn-hover { 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+  }
+  .btn-hover:hover { 
+    transform: translateY(-1px); 
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2); 
+    filter: brightness(1.05);
+  }
+  .btn-hover:active {
+    transform: translateY(0);
+  }
   
-  .card-hover { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-  .card-hover:hover { border-color: rgba(16, 185, 129, 0.4) !important; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); }
-  
+  .card-hover { 
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+  }
+  .card-hover:hover { 
+    border-color: rgba(16, 185, 129, 0.4) !important; 
+    box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.7), 0 0 15px -3px rgba(16, 185, 129, 0.08); 
+    transform: translateY(-2px);
+  }
+
+  .exec-input {
+    transition: all 0.2s ease;
+  }
+  .exec-input:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+  }
+
   .dropdown-menu {
     position: absolute;
-    top: calc(100% + 0.5rem);
+    top: calc(100% + 0.6rem);
     right: 0;
-    background: #0d1512;
-    border: 1px solid #1e2e28;
+    background: #0a110d;
+    border: 1px solid #1c2b23;
     border-radius: 8px;
-    padding: 0.4rem;
-    min-width: 220px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    padding: 0.5rem;
+    min-width: 240px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 1px 1px rgba(255,255,255,0.05);
     z-index: 1000;
   }
 
   .dropdown-item {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.75rem;
     width: 100%;
-    padding: 0.65rem 0.85rem;
+    padding: 0.7rem 0.9rem;
     color: #94a3b8;
     background: transparent;
     border: none;
@@ -71,20 +114,20 @@ const animations = `
   }
 
   .dropdown-item:hover {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(16, 185, 129, 0.12);
     color: #10b981;
   }
 
-  /* Custom Scrollbar for Executive Theme */
+  /* Custom Executive Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #060b09;
+    background: #030705;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1e2e28;
+    background: #1c2b23;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -100,65 +143,503 @@ const animations = `
 `;
 
 const ui = {
-  landingPageContainer: { minHeight: '100vh', backgroundColor: '#060b09', color: '#f8fafc', fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
-  publicHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 3rem', background: '#09120e', borderBottom: '1px solid #1a2922', position: 'sticky', top: 0, zIndex: 100 },
-  navBrand: { display: 'flex', alignItems: 'center', gap: '0.8rem', cursor: 'pointer' },
-  brandText: { fontSize: '1.25rem', fontWeight: '700', color: '#ffffff', letterSpacing: '-0.3px' },
-  heroSection: { padding: '6rem 2rem', textAlign: 'center', background: 'radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.08) 0%, rgba(6, 11, 9, 0) 70%)', borderBottom: '1px solid #121f19' },
-  heroContent: { maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  heroTitle: { fontSize: '3.2rem', fontWeight: '800', color: '#ffffff', marginBottom: '1.2rem', letterSpacing: '-1px', lineHeight: '1.15' },
-  heroSubtitle: { fontSize: '1.15rem', color: '#94a3b8', lineHeight: '1.6', maxWidth: '640px' },
-  sectionContainer: { maxWidth: '1150px', margin: '0 auto', padding: '4.5rem 1.5rem' },
-  landingGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '3rem', alignItems: 'center' },
-  landingSectionTitle: { fontSize: '1.8rem', fontWeight: '700', color: '#ffffff', marginBottom: '1rem', letterSpacing: '-0.4px' },
-  landingText: { color: '#94a3b8', fontSize: '1rem', lineHeight: '1.7' },
-  placeholderTeamBox: { width: '100%', height: '260px', background: '#0b1410', borderRadius: '8px', border: '1px solid #1a2922', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
-  activitiesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' },
-  activityCard: { background: '#0b1410', border: '1px solid #1a2922', padding: '1.8rem 1.5rem', borderRadius: '8px', textAlign: 'left' },
-  contactGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' },
-  contactCard: { background: '#0b1410', border: '1px solid #1a2922', padding: '1.8rem 1.5rem', borderRadius: '8px', textAlign: 'left' },
-  publicFooter: { padding: '2rem', textAlign: 'center', color: '#475569', borderTop: '1px solid #121f19', background: '#040706', fontSize: '0.85rem' },
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(3, 6, 5, 0.85)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' },
-  loginCard: { background: '#0a120e', border: '1px solid #1e2e28', padding: '2.5rem', borderRadius: '12px', width: '100%', maxWidth: '420px', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)' },
-  brandHeader: { marginBottom: '1.5rem', textAlign: 'center' },
-  loginTitle: { fontSize: '1.5rem', fontWeight: '700', color: '#ffffff', letterSpacing: '-0.3px' },
-  loginSubtitle: { fontSize: '0.875rem', color: '#64748b', marginTop: '0.3rem' },
-  formGap: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '0.35rem' },
-  label: { fontSize: '0.7rem', fontWeight: '700', color: '#10b981', letterSpacing: '0.6px', textTransform: 'uppercase' },
-  input: { background: '#050a08', border: '1px solid #1e2e28', padding: '0.75rem 1rem', borderRadius: '6px', color: '#ffffff', fontSize: '0.875rem', outline: 'none', transition: 'border-color 0.15s ease' },
-  primaryBtn: { background: '#10b981', color: '#04120c', border: 'none', padding: '0.75rem 1.25rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.875rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', transition: 'all 0.15s ease' },
-  primaryBtnInline: { background: '#10b981', color: '#04120c', border: 'none', padding: '0.55rem 1.1rem', borderRadius: '6px', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.15s ease' },
-  secondaryBtnInline: { background: '#121f19', color: '#e2e8f0', border: '1px solid #1e2e28', padding: '0.55rem 1.1rem', borderRadius: '6px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' },
-  linkBtn: { background: 'none', border: 'none', color: '#10b981', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'none', fontWeight: '600' },
-  errorBadge: { background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)', color: '#f87171', padding: '0.75rem', borderRadius: '6px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
-  successBadge: { background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', color: '#34d399', padding: '0.75rem', borderRadius: '6px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
-  appLayout: { minHeight: '100vh', backgroundColor: '#060b09', color: '#f8fafc', fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
-  navbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 2.5rem', background: '#09120e', borderBottom: '1px solid #1a2922', position: 'sticky', top: 0, zIndex: 100 },
-  roleTag: { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)', fontSize: '0.65rem', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '4px', letterSpacing: '0.5px' },
-  navLinks: { display: 'flex', gap: '0.6rem', alignItems: 'center' },
-  logoutBtn: { background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '0.55rem 0.9rem', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem' },
-  mainContent: { maxWidth: '1150px', margin: '2rem auto', padding: '0 1.5rem' },
-  glassCard: { background: '#0b1410', border: '1px solid #1a2922', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' },
-  pinnedCard: { background: '#0d1813', border: '1px solid #2d3f36', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem' },
-  highlightCard: { background: '#0d1a14', border: '1px solid #10b981', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem' },
-  sectionTitle: { fontSize: '1.15rem', fontWeight: '700', color: '#ffffff', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', letterSpacing: '-0.2px' },
-  cardHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.6rem' },
-  cardTitle: { fontSize: '1.05rem', fontWeight: '700', color: '#ffffff' },
-  cardDesc: { color: '#94a3b8', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.3rem' },
-  deleteBtn: { background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: '#f87171', padding: '0.4rem 0.6rem', borderRadius: '4px', cursor: 'pointer' },
-  editBtn: { background: 'rgba(16, 185, 129, 0.1)', border: 'none', color: '#10b981', padding: '0.4rem 0.6rem', borderRadius: '4px', cursor: 'pointer', marginRight: '0.4rem' },
-  emptyText: { color: '#475569', fontStyle: 'italic', padding: '1rem 0', fontSize: '0.875rem' },
-  gridGap: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  pinTag: { background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.25)', fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.2rem' },
-  checkboxLabel: { display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' },
-  checkbox: { accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' },
-  badge: { background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' },
-  timeTag: { background: '#121f19', border: '1px solid #1a2922', color: '#94a3b8', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '600' },
-  table: { width: '100%', borderCollapse: 'collapse', color: '#cbd5e1', marginTop: '1rem' },
-  th: { textAlign: 'left', padding: '0.75rem 0.85rem', borderBottom: '1px solid #1a2922', color: '#10b981', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' },
-  td: { padding: '0.75rem 0.85rem', borderBottom: '1px solid #121f19', fontSize: '0.85rem' },
-  welcomeHeader: { background: '#0b1410', border: '1px solid #1a2922', borderRadius: '8px', padding: '1.5rem', marginBottom: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', alignItems: 'center' }
+  landingPageContainer: { 
+    minHeight: '100vh', 
+    backgroundColor: '#030705', 
+    color: '#f8fafc', 
+    fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' 
+  },
+  publicHeader: { 
+    display: 'flex', 
+    justify: 'space-between', 
+    alignItems: 'center', 
+    padding: '1.25rem 3.5rem', 
+    background: '#060d09', 
+    borderBottom: '1px solid #132219', 
+    position: 'sticky', 
+    top: 0, 
+    zIndex: 100,
+    backdropFilter: 'blur(12px)'
+  },
+  navBrand: { 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.85rem', 
+    cursor: 'pointer' 
+  },
+  brandText: { 
+    fontSize: '1.2rem', 
+    fontWeight: '800', 
+    color: '#ffffff', 
+    letterSpacing: '-0.3px',
+    textTransform: 'uppercase'
+  },
+  heroSection: { 
+    padding: '8rem 2rem 6rem 2rem', 
+    textAlign: 'center', 
+    background: 'radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.12) 0%, rgba(3, 7, 5, 0) 75%)', 
+    borderBottom: '1px solid #132219' 
+  },
+  heroContent: { 
+    maxWidth: '900px', 
+    margin: '0 auto', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    alignItems: 'center' 
+  },
+  heroBadge: {
+    background: 'rgba(16, 185, 129, 0.08)',
+    border: '1px solid rgba(16, 185, 129, 0.25)',
+    color: '#10b981',
+    padding: '0.35rem 0.9rem',
+    borderRadius: '100px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    letterSpacing: '1px',
+    textTransform: 'uppercase',
+    marginBottom: '1.5rem',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  heroTitle: { 
+    fontSize: '3.6rem', 
+    fontWeight: '800', 
+    color: '#ffffff', 
+    marginBottom: '1.25rem', 
+    letterSpacing: '-1.5px', 
+    lineHeight: '1.1' 
+  },
+  heroSubtitle: { 
+    fontSize: '1.2rem', 
+    color: '#8e9b94', 
+    lineHeight: '1.65', 
+    maxWidth: '680px',
+    fontWeight: '400'
+  },
+  sectionContainer: { 
+    maxWidth: '1200px', 
+    margin: '0 auto', 
+    padding: '5rem 2rem' 
+  },
+  landingGrid: { 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', 
+    gap: '3.5rem', 
+    alignItems: 'center' 
+  },
+  landingSectionTitle: { 
+    fontSize: '2rem', 
+    fontWeight: '800', 
+    color: '#ffffff', 
+    marginBottom: '1rem', 
+    letterSpacing: '-0.5px' 
+  },
+  landingText: { 
+    color: '#8e9b94', 
+    fontSize: '1.05rem', 
+    lineHeight: '1.75' 
+  },
+  placeholderTeamBox: { 
+    width: '100%', 
+    height: '280px', 
+    background: '#060d09', 
+    borderRadius: '8px', 
+    border: '1px solid #132219', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    alignItems: 'center', 
+    justify: 'center' 
+  },
+  activitiesGrid: { 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+    gap: '1.5rem' 
+  },
+  activityCard: { 
+    background: '#060d09', 
+    border: '1px solid #132219', 
+    padding: '2rem 1.75rem', 
+    borderRadius: '8px', 
+    textAlign: 'left' 
+  },
+  contactGrid: { 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+    gap: '1.5rem' 
+  },
+  contactCard: { 
+    background: '#060d09', 
+    border: '1px solid #132219', 
+    padding: '2rem 1.75rem', 
+    borderRadius: '8px', 
+    textAlign: 'left' 
+  },
+  publicFooter: { 
+    padding: '2.5rem 2rem', 
+    textAlign: 'center', 
+    color: '#526058', 
+    borderTop: '1px solid #132219', 
+    background: '#020503', 
+    fontSize: '0.85rem',
+    fontWeight: '500'
+  },
+  modalOverlay: { 
+    position: 'fixed', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    bottom: 0, 
+    background: 'rgba(2, 5, 3, 0.88)', 
+    backdropFilter: 'blur(8px)', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justify: 'center', 
+    zIndex: 1000, 
+    padding: '1.5rem' 
+  },
+  loginCard: { 
+    background: '#060d09', 
+    border: '1px solid #1c2b23', 
+    padding: '2.75rem', 
+    borderRadius: '10px', 
+    width: '100%', 
+    maxWidth: '440px', 
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8)' 
+  },
+  brandHeader: { 
+    marginBottom: '1.75rem', 
+    textAlign: 'left' 
+  },
+  loginTitle: { 
+    fontSize: '1.6rem', 
+    fontWeight: '800', 
+    color: '#ffffff', 
+    letterSpacing: '-0.5px' 
+  },
+  loginSubtitle: { 
+    fontSize: '0.875rem', 
+    color: '#64748b', 
+    marginTop: '0.35rem' 
+  },
+  formGap: { 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '1.1rem' 
+  },
+  inputGroup: { 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '0.4rem' 
+  },
+  label: { 
+    fontSize: '0.68rem', 
+    fontWeight: '800', 
+    color: '#10b981', 
+    letterSpacing: '0.8px', 
+    textTransform: 'uppercase' 
+  },
+  input: { 
+    background: '#030705', 
+    border: '1px solid #1c2b23', 
+    padding: '0.8rem 1rem', 
+    borderRadius: '6px', 
+    color: '#ffffff', 
+    fontSize: '0.875rem', 
+    outline: 'none', 
+    transition: 'all 0.15s ease',
+    width: '100%'
+  },
+  primaryBtn: { 
+    background: '#10b981', 
+    color: '#020503', 
+    border: 'none', 
+    padding: '0.8rem 1.4rem', 
+    borderRadius: '6px', 
+    fontWeight: '700', 
+    fontSize: '0.875rem', 
+    cursor: 'pointer', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justify: 'center', 
+    gap: '0.5rem', 
+    width: '100%', 
+    letterSpacing: '0.2px'
+  },
+  primaryBtnInline: { 
+    background: '#10b981', 
+    color: '#020503', 
+    border: 'none', 
+    padding: '0.6rem 1.2rem', 
+    borderRadius: '6px', 
+    fontWeight: '700', 
+    fontSize: '0.85rem', 
+    cursor: 'pointer', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.45rem' 
+  },
+  secondaryBtnInline: { 
+    background: '#0d1813', 
+    color: '#e2e8f0', 
+    border: '1px solid #1c2b23', 
+    padding: '0.6rem 1.2rem', 
+    borderRadius: '6px', 
+    fontWeight: '600', 
+    fontSize: '0.85rem', 
+    cursor: 'pointer', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.45rem' 
+  },
+  linkBtn: { 
+    background: 'none', 
+    border: 'none', 
+    color: '#10b981', 
+    fontSize: '0.8rem', 
+    cursor: 'pointer', 
+    textDecoration: 'none', 
+    fontWeight: '600' 
+  },
+  errorBadge: { 
+    background: 'rgba(239, 68, 68, 0.08)', 
+    border: '1px solid rgba(239, 68, 68, 0.25)', 
+    color: '#f87171', 
+    padding: '0.8rem', 
+    borderRadius: '6px', 
+    fontSize: '0.8rem', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.5rem', 
+    marginBottom: '1rem' 
+  },
+  successBadge: { 
+    background: 'rgba(16, 185, 129, 0.08)', 
+    border: '1px solid rgba(16, 185, 129, 0.25)', 
+    color: '#34d399', 
+    padding: '0.8rem', 
+    borderRadius: '6px', 
+    fontSize: '0.8rem', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.5rem', 
+    marginBottom: '1rem' 
+  },
+  appLayout: { 
+    minHeight: '100vh', 
+    backgroundColor: '#030705', 
+    color: '#f8fafc', 
+    fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' 
+  },
+  navbar: { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: '0.9rem 3rem', 
+    background: '#060d09', 
+    borderBottom: '1px solid #132219', 
+    position: 'sticky', 
+    top: 0, 
+    zIndex: 100,
+    backdropFilter: 'blur(10px)'
+  },
+  roleTag: { 
+    background: 'rgba(16, 185, 129, 0.08)', 
+    color: '#10b981', 
+    border: '1px solid rgba(16, 185, 129, 0.25)', 
+    fontSize: '0.65rem', 
+    fontWeight: '800', 
+    padding: '0.2rem 0.55rem', 
+    borderRadius: '4px', 
+    letterSpacing: '0.8px',
+    textTransform: 'uppercase'
+  },
+  navLinks: { 
+    display: 'flex', 
+    gap: '0.75rem', 
+    alignItems: 'center' 
+  },
+  logoutBtn: { 
+    background: 'rgba(239, 68, 68, 0.06)', 
+    border: '1px solid rgba(239, 68, 68, 0.2)', 
+    color: '#f87171', 
+    padding: '0.6rem 1rem', 
+    borderRadius: '6px', 
+    cursor: 'pointer', 
+    fontWeight: '600', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.45rem', 
+    fontSize: '0.8rem' 
+  },
+  mainContent: { 
+    maxWidth: '1200px', 
+    margin: '2.5rem auto', 
+    padding: '0 2rem' 
+  },
+  glassCard: { 
+    background: '#060d09', 
+    border: '1px solid #132219', 
+    borderRadius: '8px', 
+    padding: '1.75rem', 
+    marginBottom: '1.5rem' 
+  },
+  pinnedCard: { 
+    background: '#08120c', 
+    border: '1px solid #1f3528', 
+    borderRadius: '8px', 
+    padding: '1.75rem', 
+    marginBottom: '1.5rem' 
+  },
+  highlightCard: { 
+    background: '#07160e', 
+    border: '1px solid #10b981', 
+    borderRadius: '8px', 
+    padding: '1.75rem', 
+    marginBottom: '1.5rem' 
+  },
+  sectionTitle: { 
+    fontSize: '1.1rem', 
+    fontWeight: '800', 
+    color: '#ffffff', 
+    marginBottom: '1.25rem', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.55rem', 
+    letterSpacing: '-0.3px',
+    textTransform: 'uppercase'
+  },
+  cardHeaderRow: { 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-start', 
+    marginBottom: '0.75rem' 
+  },
+  cardTitle: { 
+    fontSize: '1.1rem', 
+    fontWeight: '700', 
+    color: '#ffffff' 
+  },
+  cardDesc: { 
+    color: '#8e9b94', 
+    fontSize: '0.875rem', 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.45rem', 
+    marginTop: '0.35rem' 
+  },
+  deleteBtn: { 
+    background: 'rgba(239, 68, 68, 0.08)', 
+    border: '1px solid rgba(239, 68, 68, 0.2)', 
+    color: '#f87171', 
+    padding: '0.4rem 0.65rem', 
+    borderRadius: '4px', 
+    cursor: 'pointer' 
+  },
+  editBtn: { 
+    background: 'rgba(16, 185, 129, 0.08)', 
+    border: '1px solid rgba(16, 185, 129, 0.2)', 
+    color: '#10b981', 
+    padding: '0.4rem 0.65rem', 
+    borderRadius: '4px', 
+    cursor: 'pointer', 
+    marginRight: '0.4rem' 
+  },
+  emptyText: { 
+    color: '#526058', 
+    fontStyle: 'normal', 
+    padding: '1.5rem 0', 
+    fontSize: '0.875rem',
+    fontWeight: '500'
+  },
+  gridGap: { 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '1.25rem' 
+  },
+  pinTag: { 
+    background: 'rgba(234, 179, 8, 0.08)', 
+    color: '#eab308', 
+    border: '1px solid rgba(234, 179, 8, 0.25)', 
+    fontSize: '0.65rem', 
+    padding: '0.2rem 0.5rem', 
+    borderRadius: '4px', 
+    fontWeight: '800', 
+    display: 'inline-flex', 
+    alignItems: 'center', 
+    gap: '0.25rem',
+    letterSpacing: '0.5px'
+  },
+  checkboxLabel: { 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '0.6rem', 
+    color: '#8e9b94', 
+    cursor: 'pointer', 
+    fontSize: '0.85rem' 
+  },
+  checkbox: { 
+    accentColor: '#10b981', 
+    width: '16px', 
+    height: '16px', 
+    cursor: 'pointer' 
+  },
+  badge: { 
+    background: 'rgba(16, 185, 129, 0.08)', 
+    color: '#10b981', 
+    border: '1px solid rgba(16, 185, 129, 0.25)', 
+    padding: '0.25rem 0.65rem', 
+    borderRadius: '4px', 
+    fontSize: '0.75rem', 
+    fontWeight: '700', 
+    display: 'inline-flex', 
+    alignItems: 'center', 
+    gap: '0.35rem',
+    letterSpacing: '0.3px'
+  },
+  timeTag: { 
+    background: '#0a140f', 
+    border: '1px solid #132219', 
+    color: '#8e9b94', 
+    padding: '0.25rem 0.65rem', 
+    borderRadius: '4px', 
+    fontSize: '0.75rem', 
+    fontWeight: '600' 
+  },
+  table: { 
+    width: '100%', 
+    borderCollapse: 'separate',
+    borderSpacing: 0,
+    color: '#cbd5e1', 
+    marginTop: '1.25rem' 
+  },
+  th: { 
+    textAlign: 'left', 
+    padding: '0.85rem 1rem', 
+    borderBottom: '1px solid #132219', 
+    background: '#040906',
+    color: '#10b981', 
+    fontSize: '0.7rem', 
+    fontWeight: '800', 
+    textTransform: 'uppercase', 
+    letterSpacing: '0.8px' 
+  },
+  td: { 
+    padding: '0.85rem 1rem', 
+    borderBottom: '1px solid #0d1813', 
+    fontSize: '0.85rem' 
+  },
+  welcomeHeader: { 
+    background: '#060d09', 
+    border: '1px solid #132219', 
+    borderRadius: '8px', 
+    padding: '1.75rem 2rem', 
+    marginBottom: '2rem', 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+    gap: '1.5rem', 
+    alignItems: 'center' 
+  }
 };
 
 export default function App() {
@@ -1004,7 +1485,7 @@ export default function App() {
         
         <header style={ui.publicHeader}>
           <div style={ui.navBrand}>
-            <img src={logoSrc} alt="Logo" style={{ width: '38px', height: '38px', objectFit: 'contain' }} />
+            <img src={logoSrc} alt="Logo" style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
             <span style={ui.brandText}>{landingData.title}</span>
           </div>
           <button 
@@ -1012,21 +1493,23 @@ export default function App() {
             style={ui.primaryBtnInline} 
             className="btn-hover"
           >
-            <LogIn size={16}/> Bejelentkezés
+            <LogIn size={15}/> Bejelentkezés
           </button>
         </header>
 
         <section style={ui.heroSection}>
           <div style={ui.heroContent}>
-            <img src={logoSrc} alt="Logo" style={{ width: '90px', height: '90px', objectFit: 'contain', marginBottom: '1.5rem' }} className="fade-in" />
+            <div style={ui.heroBadge} className="fade-in">
+              <Shield size={14} /> Elit Akadémiai Portál
+            </div>
             <h1 style={ui.heroTitle} className="fade-in">{landingData.title}</h1>
             <p style={ui.heroSubtitle} className="fade-in">{landingData.subtitle}</p>
             <button 
               onClick={() => setShowLoginModal(true)} 
-              style={{ ...ui.primaryBtn, width: 'auto', padding: '0.85rem 2rem', fontSize: '0.95rem', marginTop: '2rem' }} 
+              style={{ ...ui.primaryBtn, width: 'auto', padding: '0.95rem 2.5rem', fontSize: '0.95rem', marginTop: '2.5rem' }} 
               className="btn-hover fade-in"
             >
-              Belépés az Oktatási Portálra <ChevronRight size={18}/>
+              Belépés az Oktatási Rendszerbe <ArrowRight size={18}/>
             </button>
           </div>
         </section>
@@ -1034,7 +1517,7 @@ export default function App() {
         <section style={ui.sectionContainer}>
           <div style={ui.landingGrid}>
             <div>
-              <h2 style={ui.landingSectionTitle}>Rólunk</h2>
+              <h2 style={ui.landingSectionTitle}>Módszertan & Célkitűzés</h2>
               <p style={ui.landingText}>{landingData.about_text}</p>
             </div>
             
@@ -1043,67 +1526,67 @@ export default function App() {
                 <img 
                   src={teamImageSrc} 
                   alt="Csapatkép" 
-                  style={{ width: '100%', maxWidth: '520px', borderRadius: '8px', border: '1px solid #1a2922' }} 
+                  style={{ width: '100%', maxWidth: '520px', borderRadius: '8px', border: '1px solid #132219' }} 
                 />
               </div>
             ) : (
               <div style={ui.placeholderTeamBox}>
-                <Users size={36} color="#10b981"/>
-                <p style={{ marginTop: '0.8rem', color: '#64748b', fontWeight: '500', fontSize: '0.85rem' }}>Csapatkép hamarosan...</p>
+                <Users size={38} color="#10b981"/>
+                <p style={{ marginTop: '0.8rem', color: '#526058', fontWeight: '600', fontSize: '0.85rem', letterSpacing: '0.5px' }}>OKTATÓI KAR CSAPATKÉP</p>
               </div>
             )}
           </div>
         </section>
 
-        <section style={{ ...ui.sectionContainer, background: '#09120e', borderRadius: '8px', border: '1px solid #1a2922' }}>
-          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '2.5rem' }}>Tevékenységi Köreink</h2>
+        <section style={{ ...ui.sectionContainer, background: '#060d09', borderRadius: '10px', border: '1px solid #132219' }}>
+          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '3rem' }}>Szakterületek & Képzések</h2>
           <div style={ui.activitiesGrid}>
             {landingData.activities.split(',').map((act, idx) => (
               <div key={idx} style={ui.activityCard} className="card-hover">
-                <Briefcase size={22} color="#10b981" style={{ marginBottom: '0.8rem' }} />
-                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#ffffff' }}>{act.trim()}</h3>
+                <Award size={24} color="#10b981" style={{ marginBottom: '1rem' }} />
+                <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#ffffff' }}>{act.trim()}</h3>
               </div>
             ))}
           </div>
         </section>
 
         <section style={ui.sectionContainer}>
-          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '2.5rem' }}>Kapcsolat & Elérhetőségek</h2>
+          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '3rem' }}>Kapcsolat & Központ</h2>
           <div style={ui.contactGrid}>
             <div style={ui.contactCard} className="card-hover">
               <Phone size={22} color="#10b981"/>
-              <h4 style={{ color: '#10b981', margin: '0.8rem 0 0.3rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Telefon</h4>
+              <h4 style={{ color: '#10b981', margin: '1rem 0 0.35rem 0', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: '800' }}>TELEFON</h4>
               <p style={{ color: '#ffffff', fontWeight: '600', fontSize: '0.95rem' }}>{landingData.phone}</p>
             </div>
 
             <div style={ui.contactCard} className="card-hover">
               <Mail size={22} color="#10b981"/>
-              <h4 style={{ color: '#10b981', margin: '0.8rem 0 0.3rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>E-mail</h4>
+              <h4 style={{ color: '#10b981', margin: '1rem 0 0.35rem 0', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: '800' }}>E-MAIL</h4>
               <p style={{ color: '#ffffff', fontWeight: '600', fontSize: '0.95rem' }}>{landingData.email}</p>
             </div>
 
             <div style={ui.contactCard} className="card-hover">
               <MapPin size={22} color="#10b981"/>
-              <h4 style={{ color: '#10b981', margin: '0.8rem 0 0.3rem 0', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Címünk</h4>
+              <h4 style={{ color: '#10b981', margin: '1rem 0 0.35rem 0', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: '800' }}>CÍM</h4>
               <p style={{ color: '#ffffff', fontWeight: '600', fontSize: '0.95rem' }}>{landingData.address}</p>
             </div>
           </div>
         </section>
 
         <footer style={ui.publicFooter}>
-          <p>© {new Date().getFullYear()} {landingData.title}. Minden jog fenntartva.</p>
+          <p>© {new Date().getFullYear()} {landingData.title}. Minden jog fenntartva. Üzleti Rendszer v3.0</p>
         </footer>
 
         {(showLoginModal || resetToken) && (
           <div style={ui.modalOverlay}>
             <div style={ui.loginCard} className="fade-in">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  <img src={logoSrc} alt="Logo" style={{ width: '32px', height: '32px' }} />
-                  <span style={{ fontWeight: '700', color: '#ffffff', fontSize: '1rem' }}>{landingData.title}</span>
+                  <img src={logoSrc} alt="Logo" style={{ width: '30px', height: '30px' }} />
+                  <span style={{ fontWeight: '800', color: '#ffffff', fontSize: '0.95rem', letterSpacing: '-0.2px' }}>{landingData.title}</span>
                 </div>
                 {!resetToken && (
-                  <button onClick={() => setShowLoginModal(false)} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+                  <button onClick={() => setShowLoginModal(false)} style={{ background: 'none', border: 'none', color: '#526058', fontSize: '1.1rem', cursor: 'pointer' }}>✕</button>
                 )}
               </div>
 
@@ -1112,15 +1595,15 @@ export default function App() {
                   {resetToken
                     ? 'Új jelszó megadása'
                     : isForgotPasswordView
-                    ? 'Új jelszó kérése'
-                    : 'Bejelentkezés'}
+                    ? 'Jelszó Visszaállítás'
+                    : 'Rendszer Belépés'}
                 </h2>
                 <p style={ui.loginSubtitle}>
                   {resetToken
-                    ? 'Add meg az új jelszavadat'
+                    ? 'Adja meg a kívánt új jelszót a fiókjához'
                     : isForgotPasswordView
                     ? 'Adja meg a regisztrált e-mail címét'
-                    : 'Lépj be az oktatási felületedre'}
+                    : 'Lépjen be az adminisztrációs és oktatási felületre'}
                 </p>
               </div>
 
@@ -1138,6 +1621,7 @@ export default function App() {
                       onChange={e => setNewResetPassword(e.target.value)} 
                       required 
                       style={ui.input} 
+                      className="exec-input"
                     />
                   </div>
 
@@ -1165,11 +1649,12 @@ export default function App() {
                     <label style={ui.label}>E-MAIL CÍM</label>
                     <input 
                       type="email" 
-                      placeholder="tanar@oktatas.hu" 
+                      placeholder="tanar@mentorstudio.hu" 
                       value={email} 
                       onChange={e => setEmail(e.target.value)} 
                       required 
                       style={ui.input} 
+                      className="exec-input"
                     />
                   </div>
                   <div style={ui.inputGroup}>
@@ -1181,10 +1666,11 @@ export default function App() {
                       onChange={e => setPassword(e.target.value)} 
                       required 
                       style={ui.input} 
+                      className="exec-input"
                     />
                   </div>
 
-                  <div style={{ textAlign: 'right', marginTop: '-0.3rem' }}>
+                  <div style={{ textAlign: 'right', marginTop: '-0.2rem' }}>
                     <button 
                       type="button" 
                       onClick={() => {
@@ -1194,12 +1680,12 @@ export default function App() {
                       }} 
                       style={ui.linkBtn}
                     >
-                      Elfelejtetted a jelszavad?
+                      Elfelejtette jelszavát?
                     </button>
                   </div>
 
                   <button type="submit" style={ui.primaryBtn} className="btn-hover">
-                    Bejelentkezés <ChevronRight size={16} />
+                    Bejelentkezés <ArrowRight size={16} />
                   </button>
                 </form>
               ) : (
@@ -1213,11 +1699,12 @@ export default function App() {
                       onChange={e => setForgotEmail(e.target.value)} 
                       required 
                       style={ui.input} 
+                      className="exec-input"
                     />
                   </div>
 
                   <button type="submit" style={ui.primaryBtn} className="btn-hover">
-                    Visszaállító link küldése <KeyRound size={15} />
+                    Visszaállító hivatkozás küldése <KeyRound size={15} />
                   </button>
 
                   <button 
@@ -1287,7 +1774,7 @@ export default function App() {
       
       <header style={ui.navbar}>
         <div style={ui.navBrand} onClick={() => setActiveTab('news')}>
-          <img src={logoSrc} alt="Logo" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+          <img src={logoSrc} alt="Logo" style={{ width: '34px', height: '34px', objectFit: 'contain' }} />
           <span style={ui.brandText}>{landingData.title}</span>
           <span style={ui.roleTag}>{(user?.is_admin || user?.id === 1) ? 'ADMIN' : (user?.role === 'teacher' ? 'TANÁR' : 'DIÁK')}</span>
         </div>
@@ -1297,17 +1784,17 @@ export default function App() {
             <button 
               onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)} 
               style={{
-                background: '#0d1813',
-                border: '1px solid #1a2922',
+                background: '#0a140f',
+                border: '1px solid #132219',
                 color: '#10b981',
-                padding: '0.55rem 1rem',
+                padding: '0.6rem 1.1rem',
                 borderRadius: '6px',
                 cursor: 'pointer',
-                fontWeight: '600',
+                fontWeight: '700',
                 fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.6rem'
               }}
               className="btn-hover"
             >
@@ -1330,11 +1817,11 @@ export default function App() {
                       className="dropdown-item"
                       style={{
                         background: activeTab === tab.id ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-                        color: activeTab === tab.id ? '#10b981' : '#94a3b8',
-                        fontWeight: activeTab === tab.id ? '600' : '500'
+                        color: activeTab === tab.id ? '#10b981' : '#8e9b94',
+                        fontWeight: activeTab === tab.id ? '700' : '500'
                       }}
                     >
-                      <Icon size={15} />
+                      <Icon size={16} />
                       {tab.label}
                     </button>
                   );
@@ -1353,29 +1840,29 @@ export default function App() {
 
         <div style={ui.welcomeHeader} className="fade-in">
           <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#ffffff', margin: 0, letterSpacing: '-0.3px' }}>
-              Üdvözöljük újra, <span style={{ color: '#10b981' }}>{user?.full_name || 'Felhasználó'}</span>!
+            <h2 style={{ fontSize: '1.45rem', fontWeight: '800', color: '#ffffff', margin: 0, letterSpacing: '-0.4px' }}>
+              Üdvözöljük, <span style={{ color: '#10b981' }}>{user?.full_name || 'Felhasználó'}</span>
             </h2>
-            <p style={{ color: '#64748b', margin: '0.3rem 0 0 0', fontSize: '0.875rem' }}>
-              A mai nap áttekintése és az operatív feladatok kezelése.
+            <p style={{ color: '#64748b', margin: '0.35rem 0 0 0', fontSize: '0.875rem' }}>
+              Operatív áttekintés és az aktuális feladatok kezelése.
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-            <div style={{ background: '#060b09', border: '1px solid #1a2922', padding: '0.6rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ background: '#030705', border: '1px solid #132219', padding: '0.65rem 1.1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <Clock size={18} color="#10b981" />
               <div>
-                <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px' }}>PONTOS IDŐ</span>
-                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#ffffff' }}>
+                <span style={{ display: 'block', fontSize: '0.65rem', color: '#526058', fontWeight: '800', letterSpacing: '0.8px', textTransform: 'uppercase' }}>PONTOS IDŐ</span>
+                <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#ffffff' }} className="mono-font">
                   {currentTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
               </div>
             </div>
 
-            <div style={{ background: '#060b09', border: '1px solid #1a2922', padding: '0.6rem 1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <div style={{ background: '#030705', border: '1px solid #132219', padding: '0.65rem 1.1rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <CalendarIcon size={18} color="#10b981" />
               <div>
-                <span style={{ display: 'block', fontSize: '0.65rem', color: '#64748b', fontWeight: '700', letterSpacing: '0.5px' }}>MAI DÁTUM</span>
+                <span style={{ display: 'block', fontSize: '0.65rem', color: '#526058', fontWeight: '800', letterSpacing: '0.8px', textTransform: 'uppercase' }}>MAI DÁTUM</span>
                 <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#ffffff' }}>
                   {currentTime.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' })}
                 </span>
@@ -1386,52 +1873,52 @@ export default function App() {
 
         {(user?.is_admin || user?.id === 1) && activeTab === 'editLanding' && (
           <div style={ui.glassCard} className="fade-in">
-            <h3 style={ui.sectionTitle}><Layout size={18} color="#10b981"/> Bejelentkező Kezdőlap Szerkesztése</h3>
-            <form onSubmit={handleUpdateLanding} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <h3 style={ui.sectionTitle}><Layout size={18} color="#10b981"/> Kezdőlap Szerkesztése</h3>
+            <form onSubmit={handleUpdateLanding} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem' }}>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>FŐCÍM (TITLE)</label>
-                  <input type="text" value={landingForm.title || ''} onChange={e => setLandingForm({...landingForm, title: e.target.value})} style={ui.input} required />
+                  <input type="text" value={landingForm.title || ''} onChange={e => setLandingForm({...landingForm, title: e.target.value})} style={ui.input} className="exec-input" required />
                 </div>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>ALCÍM (SUBTITLE)</label>
-                  <input type="text" value={landingForm.subtitle || ''} onChange={e => setLandingForm({...landingForm, subtitle: e.target.value})} style={ui.input} required />
+                  <input type="text" value={landingForm.subtitle || ''} onChange={e => setLandingForm({...landingForm, subtitle: e.target.value})} style={ui.input} className="exec-input" required />
                 </div>
               </div>
 
               <div style={ui.inputGroup}>
                 <label style={ui.label}>BEMUTATKOZÓ SZÖVEG (ABOUT TEXT)</label>
-                <textarea value={landingForm.about_text || ''} onChange={e => setLandingForm({...landingForm, about_text: e.target.value})} style={{ ...ui.input, height: '90px' }} required></textarea>
+                <textarea value={landingForm.about_text || ''} onChange={e => setLandingForm({...landingForm, about_text: e.target.value})} style={{ ...ui.input, height: '95px' }} className="exec-input" required></textarea>
               </div>
 
               <div style={ui.inputGroup}>
                 <label style={ui.label}>TEVÉKENYSÉGI KÖRÖK (Vesszővel elválasztva)</label>
-                <input type="text" value={landingForm.activities || ''} onChange={e => setLandingForm({...landingForm, activities: e.target.value})} style={ui.input} required />
+                <input type="text" value={landingForm.activities || ''} onChange={e => setLandingForm({...landingForm, activities: e.target.value})} style={ui.input} className="exec-input" required />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.1rem' }}>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>TELEFON</label>
-                  <input type="text" value={landingForm.phone || ''} onChange={e => setLandingForm({...landingForm, phone: e.target.value})} style={ui.input} />
+                  <input type="text" value={landingForm.phone || ''} onChange={e => setLandingForm({...landingForm, phone: e.target.value})} style={ui.input} className="exec-input" />
                 </div>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>E-MAIL</label>
-                  <input type="email" value={landingForm.email || ''} onChange={e => setLandingForm({...landingForm, email: e.target.value})} style={ui.input} />
+                  <input type="email" value={landingForm.email || ''} onChange={e => setLandingForm({...landingForm, email: e.target.value})} style={ui.input} className="exec-input" />
                 </div>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>CÍM</label>
-                  <input type="text" value={landingForm.address || ''} onChange={e => setLandingForm({...landingForm, address: e.target.value})} style={ui.input} />
+                  <input type="text" value={landingForm.address || ''} onChange={e => setLandingForm({...landingForm, address: e.target.value})} style={ui.input} className="exec-input" />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.1rem', marginTop: '0.5rem' }}>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>ÚJ LOGÓ KÉP</label>
-                  <input type="file" accept="image/*" onChange={e => setLogoImageFile(e.target.files[0])} style={ui.input} />
+                  <input type="file" accept="image/*" onChange={e => setLogoImageFile(e.target.files[0])} style={ui.input} className="exec-input" />
                 </div>
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>ÚJ CSAPATKÉP</label>
-                  <input type="file" accept="image/*" onChange={e => setTeamImageFile(e.target.files[0])} style={ui.input} />
+                  <input type="file" accept="image/*" onChange={e => setTeamImageFile(e.target.files[0])} style={ui.input} className="exec-input" />
                 </div>
               </div>
 
@@ -1449,17 +1936,17 @@ export default function App() {
                 <div style={ui.cardHeaderRow}>
                   <h3 style={ui.sectionTitle}><Megaphone size={18} color="#10b981"/> Új Hír Közzététele</h3>
                 </div>
-                <form onSubmit={handleCreateAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <form onSubmit={handleCreateAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>CÍM</label>
-                    <input type="text" placeholder="Pl. Elmaradnak a pénteki órák" value={newAnnouncement.title} onChange={e => setNewAnnouncement({...newAnnouncement, title: e.target.value})} style={ui.input} required />
+                    <input type="text" placeholder="Pl. Elmaradnak a pénteki órák" value={newAnnouncement.title} onChange={e => setNewAnnouncement({...newAnnouncement, title: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>TARTALOM</label>
-                    <textarea placeholder="Leírás..." value={newAnnouncement.content} onChange={e => setNewAnnouncement({...newAnnouncement, content: e.target.value})} style={{...ui.input, height: '75px'}} required></textarea>
+                    <textarea placeholder="Leírás..." value={newAnnouncement.content} onChange={e => setNewAnnouncement({...newAnnouncement, content: e.target.value})} style={{...ui.input, height: '80px'}} className="exec-input" required></textarea>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                  <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                     <label style={ui.checkboxLabel}>
                       <input 
                         type="checkbox" 
@@ -1495,29 +1982,29 @@ export default function App() {
                 announcements.map(a => (
                   <div key={a.id} style={a.is_pinned ? ui.pinnedCard : ui.glassCard} className="card-hover">
                     <div style={ui.cardHeaderRow}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {Boolean(a.is_pinned) && <span style={ui.pinTag}><Pin size={11}/> FIXÁLT HÍR</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        {Boolean(a.is_pinned) && <span style={ui.pinTag}><Pin size={11}/> FIXÁLT</span>}
                         <h4 style={ui.cardTitle}>{a.title}</h4>
                       </div>
                       {user?.role === 'teacher' && (
                         <button onClick={() => handleDeleteAnnouncement(a.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={15}/></button>
                       )}
                     </div>
-                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: '1.6' }}>{a.content}</p>
+                    <p style={{ color: '#8e9b94', fontSize: '0.9rem', lineHeight: '1.65' }}>{a.content}</p>
 
                     {user?.role === 'student' && Boolean(a.is_applyable) && (
                       <button 
                         onClick={() => handleApplyToAnnouncement(a)} 
-                        style={{ ...ui.primaryBtn, marginTop: '0.85rem', width: 'auto', padding: '0.5rem 1rem' }}
+                        style={{ ...ui.primaryBtn, marginTop: '1rem', width: 'auto', padding: '0.55rem 1.2rem' }}
                         className="btn-hover"
                       >
                         <CheckCircle2 size={15}/> Jelentkezem az órára
                       </button>
                     )}
 
-                    <div style={{ marginTop: '0.85rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#475569', borderTop: '1px solid #121f19', paddingTop: '0.6rem' }}>
-                      <span>Szerző: <strong style={{ color: '#94a3b8' }}>{a.teacher_name || 'Tanár'}</strong></span>
-                      <span>{new Date(a.created_at).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                    <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#526058', borderTop: '1px solid #0d1813', paddingTop: '0.75rem' }}>
+                      <span>Szerző: <strong style={{ color: '#8e9b94' }}>{a.teacher_name || 'Tanár'}</strong></span>
+                      <span className="mono-font">{new Date(a.created_at).toLocaleString('hu-HU', { dateStyle: 'short', timeStyle: 'short' })}</span>
                     </div>
                   </div>
                 ))
@@ -1533,7 +2020,7 @@ export default function App() {
                 <div style={ui.cardHeaderRow}>
                   <h3 style={ui.sectionTitle}><Users size={18} color="#10b981"/> Új Bemutatkozó Kártya Hozzáadása</h3>
                 </div>
-                <form onSubmit={handleCreateAboutUs} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <form onSubmit={handleCreateAboutUs} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>NÉV / CÍM</label>
                     <input 
@@ -1542,6 +2029,7 @@ export default function App() {
                       value={aboutUsName} 
                       onChange={e => setAboutUsName(e.target.value)} 
                       style={ui.input} 
+                      className="exec-input"
                       required 
                     />
                   </div>
@@ -1553,6 +2041,7 @@ export default function App() {
                       accept="image/*" 
                       onChange={e => setAboutUsImage(e.target.files[0])} 
                       style={ui.input} 
+                      className="exec-input"
                       required 
                     />
                   </div>
@@ -1563,7 +2052,8 @@ export default function App() {
                       placeholder="Leírás, tapasztalatok, specializáció..." 
                       value={aboutUsDesc} 
                       onChange={e => setAboutUsDesc(e.target.value)} 
-                      style={{...ui.input, height: '85px'}} 
+                      style={{...ui.input, height: '90px'}} 
+                      className="exec-input"
                       required
                     ></textarea>
                   </div>
@@ -1587,8 +2077,8 @@ export default function App() {
                   return (
                     <div key={item.id} style={ui.glassCard} className="card-hover">
                       {editingAboutUsId === item.id ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                          <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem' }}>Névjegy Szerkesztése (#{item.id})</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Névjegy Szerkesztése (#{item.id})</h4>
                           <div style={ui.inputGroup}>
                             <label style={ui.label}>NÉV / CÍM</label>
                             <input 
@@ -1596,6 +2086,7 @@ export default function App() {
                               value={editAboutUsData.name} 
                               onChange={e => setEditAboutUsData({ ...editAboutUsData, name: e.target.value })} 
                               style={ui.input} 
+                              className="exec-input"
                               required 
                             />
                           </div>
@@ -1607,6 +2098,7 @@ export default function App() {
                               accept="image/*" 
                               onChange={e => setEditAboutUsImage(e.target.files[0])} 
                               style={ui.input} 
+                              className="exec-input"
                             />
                           </div>
 
@@ -1615,22 +2107,23 @@ export default function App() {
                             <textarea 
                               value={editAboutUsData.description} 
                               onChange={e => setEditAboutUsData({ ...editAboutUsData, description: e.target.value })} 
-                              style={{ ...ui.input, height: '85px' }} 
+                              style={{ ...ui.input, height: '90px' }} 
+                              className="exec-input"
                               required
                             />
                           </div>
 
-                          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.3rem' }}>
+                          <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem' }}>
                             <button onClick={() => handleSaveEditAboutUs(item.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={15}/> Mentés</button>
                             <button onClick={() => setEditingAboutUsId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={15}/> Mégse</button>
                           </div>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                           <img 
                             src={imageUrl} 
                             alt={item.name} 
-                            style={{ width: '100px', height: '100px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #1a2922' }} 
+                            style={{ width: '105px', height: '105px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #132219' }} 
                           />
                           <div style={{ flex: 1, minWidth: '240px' }}>
                             <div style={ui.cardHeaderRow}>
@@ -1642,7 +2135,7 @@ export default function App() {
                                 </div>
                               )}
                             </div>
-                            <p style={{ color: '#94a3b8', fontSize: '0.875rem', lineHeight: '1.6', whiteSpace: 'pre-line' }}>{item.description}</p>
+                            <p style={{ color: '#8e9b94', fontSize: '0.875rem', lineHeight: '1.65', whiteSpace: 'pre-line' }}>{item.description}</p>
                           </div>
                         </div>
                       )}
@@ -1660,14 +2153,14 @@ export default function App() {
               <div style={ui.highlightCard} className="fade-in">
                 <div style={ui.cardHeaderRow}>
                   <span style={ui.badge}><Sparkles size={13}/> MAI ÓRÁD</span>
-                  <span style={ui.timeTag}>
+                  <span style={ui.timeTag} className="mono-font">
                     {new Date(todayLesson.start_time).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', margin: '0.4rem 0' }}>{todayLesson.subject}</h3>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: '0.5rem 0', color: '#ffffff' }}>{todayLesson.subject}</h3>
                 <p style={ui.cardDesc}><BookOpen size={15}/> {todayLesson.topic || 'Tematika nincs megadva'}</p>
                 {todayLesson.notes && <p style={{ ...ui.cardDesc, color: '#64748b' }}><FileText size={15}/> Megjegyzés: {todayLesson.notes}</p>}
-                <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.5rem', fontSize: '0.9rem' }}>Óradíj: {todayLesson.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(todayLesson.calculated_price || 0).toLocaleString('hu-HU')} Ft`}</p>
+                <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.75rem', fontSize: '0.9rem' }}>Óradíj: {todayLesson.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(todayLesson.calculated_price || 0).toLocaleString('hu-HU')} Ft`}</p>
               </div>
             ) : (
               <div style={ui.glassCard}>
@@ -1675,7 +2168,7 @@ export default function App() {
               </div>
             )}
 
-            <h3 style={{ ...ui.sectionTitle, marginTop: '1.5rem' }}>Közelgő Óráim</h3>
+            <h3 style={{ ...ui.sectionTitle, marginTop: '2rem' }}>Közelgő Óráim</h3>
             <div style={ui.gridGap}>
               {lessons.length === 0 ? (
                 <p style={ui.emptyText}>Nincsenek jövőbeli óráid.</p>
@@ -1684,17 +2177,17 @@ export default function App() {
                   <div key={l.id} style={ui.glassCard} className="card-hover">
                     <div style={ui.cardHeaderRow}>
                       <h4 style={ui.cardTitle}>{l.subject}</h4>
-                      <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
+                      <span style={ui.timeTag} className="mono-font">{formatLessonTime(l.start_time, l.end_time)}</span>
                     </div>
                     <p style={ui.cardDesc}><BookOpen size={15}/> {l.topic || 'Tematika nincs megadva'}</p>
                     {l.notes && <p style={{ ...ui.cardDesc, color: '#64748b' }}><FileText size={15}/> Megjegyzés: {l.notes}</p>}
-                    <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.5rem', fontSize: '0.875rem' }}>Díj: {l.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(l.calculated_price || 0).toLocaleString('hu-HU')} Ft`}</p>
+                    <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.6rem', fontSize: '0.875rem' }}>Díj: {l.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(l.calculated_price || 0).toLocaleString('hu-HU')} Ft`}</p>
                   </div>
                 ))
               )}
             </div>
 
-            <h3 style={{ ...ui.sectionTitle, marginTop: '1.5rem' }}>Korábbi Óráim</h3>
+            <h3 style={{ ...ui.sectionTitle, marginTop: '2rem' }}>Korábbi Óráim</h3>
             <div style={ui.gridGap}>
               {pastLessons.length === 0 ? (
                 <p style={ui.emptyText}>Nincsenek korábbi óráid.</p>
@@ -1703,10 +2196,10 @@ export default function App() {
                   <div key={l.id} style={{ ...ui.glassCard, opacity: 0.7 }} className="card-hover">
                     <div style={ui.cardHeaderRow}>
                       <h4 style={ui.cardTitle}>{l.subject}</h4>
-                      <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
+                      <span style={ui.timeTag} className="mono-font">{formatLessonTime(l.start_time, l.end_time)}</span>
                     </div>
                     <p style={ui.cardDesc}><BookOpen size={15}/> {l.topic || 'Tematika nincs megadva'}</p>
-                    <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.5rem', fontSize: '0.875rem' }}>Díj: {l.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(l.calculated_price || 0).toLocaleString('hu-HU')} Ft`}</p>
+                    <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.6rem', fontSize: '0.875rem' }}>Díj: {l.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(l.calculated_price || 0).toLocaleString('hu-HU')} Ft`}</p>
                   </div>
                 ))
               )}
@@ -1718,13 +2211,14 @@ export default function App() {
           <div>
             <h3 style={ui.sectionTitle}><Search size={18} color="#10b981"/> Tanárkereső & Szaktanárok</h3>
             
-            <div style={{ marginBottom: '1.2rem' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
               <input 
                 type="text" 
                 placeholder="Keresés tantárgy vagy tanár neve alapján..." 
                 value={subjectSearch} 
                 onChange={e => setSubjectSearch(e.target.value)} 
                 style={ui.input} 
+                className="exec-input"
               />
             </div>
 
@@ -1736,9 +2230,9 @@ export default function App() {
                   <div key={t.id} style={ui.glassCard} className="card-hover">
                     <div style={ui.cardHeaderRow}>
                       <div>
-                        <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#ffffff' }}>{t.full_name}</h4>
-                        <span style={{ ...ui.badge, marginTop: '0.3rem' }}><BookOpen size={12}/> {t.subject || 'Szakos tanár'}</span>
-                        <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: '#10b981' }}>
+                        <h4 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#ffffff' }}>{t.full_name}</h4>
+                        <span style={{ ...ui.badge, marginTop: '0.4rem' }}><BookOpen size={12}/> {t.subject || 'Szakos tanár'}</span>
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.825rem', color: '#10b981', fontWeight: '600' }} className="mono-font">
                           <span>50 perc: {t.hourly_rate_50 || 5000} Ft</span> | <span>100 perc: {t.hourly_rate_100 || 9000} Ft</span>
                         </div>
                       </div>
@@ -1754,13 +2248,13 @@ export default function App() {
                       </button>
                     </div>
                     
-                    <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.75rem', lineHeight: '1.5' }}>
+                    <p style={{ color: '#8e9b94', fontSize: '0.875rem', marginTop: '0.85rem', lineHeight: '1.6' }}>
                       {t.bio || 'Nincs részletes bemutatkozás megadva.'}
                     </p>
 
-                    <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.85rem', fontSize: '0.8rem', color: '#64748b', borderTop: '1px solid #121f19', paddingTop: '0.6rem' }}>
-                      {t.phone && <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Phone size={13}/> {t.phone}</span>}
-                      {t.email && <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Mail size={13}/> {t.email}</span>}
+                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '1rem', fontSize: '0.8rem', color: '#526058', borderTop: '1px solid #0d1813', paddingTop: '0.75rem' }}>
+                      {t.phone && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Phone size={13}/> {t.phone}</span>}
+                      {t.email && <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Mail size={13}/> {t.email}</span>}
                     </div>
                   </div>
                 ))
@@ -1774,14 +2268,14 @@ export default function App() {
             <h3 style={ui.sectionTitle}>Személyes Tanárod Elérhetőségei</h3>
             {teacherInfo ? (
               <div style={ui.glassCard} className="fade-in">
-                <h4 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#ffffff', marginBottom: '0.85rem' }}>{teacherInfo.full_name}</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                  <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94a3b8', fontSize: '0.875rem' }}><Mail size={16} color="#10b981"/> <strong>E-mail:</strong> {teacherInfo.email}</p>
-                  <p style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#94a3b8', fontSize: '0.875rem' }}><Phone size={16} color="#10b981"/> <strong>Telefon:</strong> {teacherInfo.phone || 'Nincs megadva'}</p>
+                <h4 style={{ fontSize: '1.2rem', fontWeight: '700', color: '#ffffff', marginBottom: '1rem' }}>{teacherInfo.full_name}</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#8e9b94', fontSize: '0.875rem' }}><Mail size={16} color="#10b981"/> <strong>E-mail:</strong> {teacherInfo.email}</p>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#8e9b94', fontSize: '0.875rem' }}><Phone size={16} color="#10b981"/> <strong>Telefon:</strong> {teacherInfo.phone || 'Nincs megadva'}</p>
                   {teacherInfo.bio && (
-                    <div style={{ marginTop: '0.5rem', borderTop: '1px solid #121f19', paddingTop: '0.6rem' }}>
-                      <strong style={{ color: '#10b981', fontSize: '0.8rem' }}>BEMUTATKOZÁS:</strong>
-                      <p style={{ color: '#64748b', marginTop: '0.25rem', lineHeight: '1.5', fontSize: '0.85rem' }}>{teacherInfo.bio}</p>
+                    <div style={{ marginTop: '0.75rem', borderTop: '1px solid #0d1813', paddingTop: '0.75rem' }}>
+                      <strong style={{ color: '#10b981', fontSize: '0.75rem', letterSpacing: '0.5px' }}>BEMUTATKOZÁS:</strong>
+                      <p style={{ color: '#64748b', marginTop: '0.35rem', lineHeight: '1.6', fontSize: '0.85rem' }}>{teacherInfo.bio}</p>
                     </div>
                   )}
                 </div>
@@ -1798,12 +2292,13 @@ export default function App() {
           <div>
             {(user?.is_admin || user?.id === 1) && (
               <div style={ui.glassCard} className="fade-in">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-                  <label style={{ color: '#10b981', fontWeight: '700', fontSize: '0.75rem', letterSpacing: '0.5px' }}>TANÁRI SZŰRŐ (ADMIN):</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <label style={{ color: '#10b981', fontWeight: '800', fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase' }}>TANÁRI SZŰRŐ (ADMIN):</label>
                   <select 
                     value={selectedTeacherId} 
                     onChange={e => setSelectedTeacherId(e.target.value)} 
-                    style={{ ...ui.input, minWidth: '220px' }}
+                    style={{ ...ui.input, minWidth: '240px' }}
+                    className="exec-input"
                   >
                     <option value="">Összes tanár órái</option>
                     {scheduleTeachers.map(t => (
@@ -1821,14 +2316,15 @@ export default function App() {
 
             <div style={ui.glassCard} className="fade-in">
               <h3 style={ui.sectionTitle}><Plus size={18} color="#10b981"/> Új Óra Kiírása</h3>
-              <form onSubmit={handleCreateLesson} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <form onSubmit={handleCreateLesson} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>DIÁK KIVÁLASZTÁSA</label>
                     <select 
                       value={newLesson.student_id} 
                       onChange={e => setNewLesson({...newLesson, student_id: e.target.value})} 
                       style={ui.input} 
+                      className="exec-input"
                       required
                     >
                       <option value="">-- Válassz diákot --</option>
@@ -1845,12 +2341,13 @@ export default function App() {
                       value={newLesson.subject} 
                       onChange={e => setNewLesson({...newLesson, subject: e.target.value})} 
                       style={ui.input} 
+                      className="exec-input"
                       required 
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>KEZDETI IDŐPONT</label>
                     <input 
@@ -1858,6 +2355,7 @@ export default function App() {
                       value={newLesson.start_time} 
                       onChange={e => setNewLesson({...newLesson, start_time: e.target.value})} 
                       style={ui.input} 
+                      className="exec-input"
                       required 
                     />
                   </div>
@@ -1869,12 +2367,13 @@ export default function App() {
                       value={newLesson.end_time} 
                       onChange={e => setNewLesson({...newLesson, end_time: e.target.value})} 
                       style={ui.input} 
+                      className="exec-input"
                       required 
                     />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>TÉMAKÖR / TEMATIKA</label>
                     <input 
@@ -1883,6 +2382,7 @@ export default function App() {
                       value={newLesson.topic} 
                       onChange={e => setNewLesson({...newLesson, topic: e.target.value})} 
                       style={ui.input} 
+                      className="exec-input"
                     />
                   </div>
 
@@ -1894,6 +2394,7 @@ export default function App() {
                       value={newLesson.custom_price} 
                       onChange={e => setNewLesson({...newLesson, custom_price: e.target.value})} 
                       style={ui.input} 
+                      className="exec-input"
                     />
                   </div>
                 </div>
@@ -1904,11 +2405,12 @@ export default function App() {
                     placeholder="Házifeladat, egyéni megjegyzések..." 
                     value={newLesson.notes} 
                     onChange={e => setNewLesson({...newLesson, notes: e.target.value})} 
-                    style={{ ...ui.input, height: '65px' }}
+                    style={{ ...ui.input, height: '70px' }}
+                    className="exec-input"
                   ></textarea>
                 </div>
 
-                <div style={{ background: '#050a08', padding: '0.85rem', borderRadius: '6px', border: '1px solid #1a2922', marginTop: '0.25rem' }}>
+                <div style={{ background: '#030705', padding: '1rem', borderRadius: '6px', border: '1px solid #132219', marginTop: '0.25rem' }}>
                   <label style={ui.checkboxLabel}>
                     <input 
                       type="checkbox" 
@@ -1916,13 +2418,13 @@ export default function App() {
                       onChange={e => setNewLesson({...newLesson, is_recurring: e.target.checked})} 
                       style={ui.checkbox} 
                     />
-                    <span style={{ fontWeight: '600', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontWeight: '700', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                       <Repeat size={15} /> Ismétlődő óra generálása (Hetente ugyanebben az időpontban)
                     </span>
                   </label>
 
                   {newLesson.is_recurring && (
-                    <div style={{ ...ui.inputGroup, marginTop: '0.75rem' }}>
+                    <div style={{ ...ui.inputGroup, marginTop: '0.85rem' }}>
                       <label style={ui.label}>ISMÉTLŐDÉSEK SZÁMA (HETEK SZÁMA)</label>
                       <input 
                         type="number" 
@@ -1930,10 +2432,11 @@ export default function App() {
                         max="52" 
                         value={newLesson.repeat_weeks} 
                         onChange={e => setNewLesson({...newLesson, repeat_weeks: parseInt(e.target.value) || 1})} 
-                        style={{ ...ui.input, maxWidth: '200px' }} 
+                        style={{ ...ui.input, maxWidth: '220px' }} 
+                        className="exec-input"
                         required 
                       />
-                      <span style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#526058', marginTop: '0.25rem' }}>
                         A megadott kezdési időponttól kezdve heti rendszerességgel jönnek létre az alkalmak.
                       </span>
                     </div>
@@ -1952,8 +2455,8 @@ export default function App() {
                 lessons.map(l => (
                   <div key={l.id} style={ui.glassCard} className="card-hover">
                     {editingLessonId === l.id ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem' }}>Óra Szerkesztése (#{l.id})</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Óra Szerkesztése (#{l.id})</h4>
                         
                         <div style={ui.inputGroup}>
                           <label style={ui.label}>TÉMAKÖR</label>
@@ -1962,6 +2465,7 @@ export default function App() {
                             value={editLessonData.topic} 
                             onChange={e => setEditLessonData({ ...editLessonData, topic: e.target.value })} 
                             style={ui.input} 
+                            className="exec-input"
                           />
                         </div>
 
@@ -1970,7 +2474,8 @@ export default function App() {
                           <textarea 
                             value={editLessonData.notes} 
                             onChange={e => setEditLessonData({ ...editLessonData, notes: e.target.value })} 
-                            style={{ ...ui.input, height: '55px' }} 
+                            style={{ ...ui.input, height: '60px' }} 
+                            className="exec-input"
                           />
                         </div>
 
@@ -1981,10 +2486,11 @@ export default function App() {
                             value={editLessonData.custom_price} 
                             onChange={e => setEditLessonData({ ...editLessonData, custom_price: parseFloat(e.target.value) || 0 })} 
                             style={ui.input} 
+                            className="exec-input"
                           />
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem' }}>
                           <button onClick={() => handleSaveEditLesson(l.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={15}/> Mentés</button>
                           <button onClick={() => setEditingLessonId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={15}/> Mégse</button>
                         </div>
@@ -1994,7 +2500,7 @@ export default function App() {
                         <div style={ui.cardHeaderRow}>
                           <div>
                             <h4 style={ui.cardTitle}>{l.subject} - {l.student_name || 'Diák'}</h4>
-                            <span style={ui.timeTag}>{formatLessonTime(l.start_time, l.end_time)}</span>
+                            <span style={ui.timeTag} className="mono-font">{formatLessonTime(l.start_time, l.end_time)}</span>
                           </div>
                           <div>
                             <button onClick={() => handleStartEditLesson(l)} style={ui.editBtn} className="btn-hover"><Edit size={15}/></button>
@@ -2005,28 +2511,30 @@ export default function App() {
                         <p style={ui.cardDesc}><BookOpen size={15}/> {l.topic || 'Nincs leírás'}</p>
                         {l.notes && <p style={{ ...ui.cardDesc, color: '#64748b' }}><FileText size={15}/> Megjegyzés: {l.notes}</p>}
                         
-                        <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.4rem', fontSize: '0.85rem' }}>
+                        <p style={{ color: '#10b981', fontWeight: '700', marginTop: '0.5rem', fontSize: '0.85rem' }} className="mono-font">
                           Beállított díj: {l.payment_status === 'settled' ? '0 Ft (Rendezve)' : `${(l.calculated_price || 0).toLocaleString('hu-HU')} Ft`}
                         </p>
 
-                        <div style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap', borderTop: '1px solid #121f19', paddingTop: '0.6rem' }}>
-                          <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '700', letterSpacing: '0.5px' }}>FIZETÉSI STÁTUSZ:</span>
+                        <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', borderTop: '1px solid #0d1813', paddingTop: '0.75rem' }}>
+                          <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: '800', letterSpacing: '0.8px', textTransform: 'uppercase' }}>FIZETÉSI STÁTUSZ:</span>
                           <select 
                             value={l.payment_status || (l.is_paid ? 'cash' : 'unpaid')} 
                             onChange={e => handlePaymentChange(l.id, e.target.value)}
                             style={{
                               ...ui.input,
-                              padding: '0.35rem 0.65rem',
+                              padding: '0.4rem 0.75rem',
                               fontSize: '0.8rem',
-                              background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.15)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'),
+                              width: 'auto',
+                              background: l.payment_status === 'settled' ? 'rgba(59, 130, 246, 0.12)' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)'),
                               borderColor: l.payment_status === 'settled' ? '#3b82f6' : (l.is_paid || l.payment_status === 'cash' || l.payment_status === 'transfer' ? '#10b981' : '#ef4444'),
-                              color: '#ffffff'
+                              color: '#ffffff',
+                              fontWeight: '600'
                             }}
                           >
-                            <option value="unpaid" style={{ background: '#09120e' }}>❌ Kifizetetlen</option>
-                            <option value="cash" style={{ background: '#09120e' }}>💵 Készpénz</option>
-                            <option value="transfer" style={{ background: '#09120e' }}>🏦 Átutalás</option>
-                            <option value="settled" style={{ background: '#09120e' }}>🤝 Rendezve (0 Ft / Jutalék mentes)</option>
+                            <option value="unpaid" style={{ background: '#060d09' }}>❌ Kifizetetlen</option>
+                            <option value="cash" style={{ background: '#060d09' }}>💵 Készpénz</option>
+                            <option value="transfer" style={{ background: '#060d09' }}>🏦 Átutalás</option>
+                            <option value="settled" style={{ background: '#060d09' }}>🤝 Rendezve (0 Ft / Jutalék mentes)</option>
                           </select>
                         </div>
                       </>
@@ -2040,11 +2548,11 @@ export default function App() {
 
         {user?.role === 'teacher' && activeTab === 'earnings' && (
           <div id="printable-earnings-section" style={ui.glassCard} className="fade-in">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <h3 style={{ ...ui.sectionTitle, margin: 0 }}><Calculator size={20} color="#10b981"/> Kereset Kimutatás</h3>
               <button onClick={() => window.print()} style={ui.primaryBtnInline} className="btn-hover no-print"><Printer size={15}/> Nyomtatás / PDF</button>
             </div>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+            <p style={{ color: '#8e9b94', fontSize: '0.875rem', marginBottom: '1.5rem', lineHeight: '1.6' }}>
               {(user?.is_admin || user?.id === 1) 
                 ? (selectedTeacherId 
                     ? 'A kiválasztott tanár óráiból befolyt bruttó összeg, a levont jutalék (50 perc: 1.500 Ft, 100 perc: 2.000 Ft), valamint a tanár által kézhez kapandó nettó kereset.' 
@@ -2053,12 +2561,13 @@ export default function App() {
             </p>
 
             {(user?.is_admin || user?.id === 1) && (
-              <div className="no-print" style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
-                <label style={{ color: '#10b981', fontWeight: '700', fontSize: '0.75rem', letterSpacing: '0.5px' }}>TANÁRI SZŰRŐ (ADMIN):</label>
+              <div className="no-print" style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <label style={{ color: '#10b981', fontWeight: '800', fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase' }}>TANÁRI SZŰRŐ (ADMIN):</label>
                 <select 
                   value={selectedTeacherId} 
                   onChange={e => setSelectedTeacherId(e.target.value)} 
-                  style={{ ...ui.input, minWidth: '220px' }}
+                  style={{ ...ui.input, minWidth: '240px' }}
+                  className="exec-input"
                 >
                   <option value="">Összes tanár nézete (Admin)</option>
                   {scheduleTeachers.map(t => (
@@ -2068,10 +2577,10 @@ export default function App() {
               </div>
             )}
 
-            <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.85rem', marginBottom: '1.5rem', background: '#050a08', padding: '1rem', borderRadius: '6px', border: '1px solid #1a2922' }}>
+            <div className="no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.75rem', background: '#030705', padding: '1.25rem', borderRadius: '6px', border: '1px solid #132219' }}>
               <div style={ui.inputGroup}>
                 <label style={ui.label}>BONTÁSI IDŐSZAK</label>
-                <select value={teacherEarningsPeriod} onChange={e => setTeacherEarningsPeriod(e.target.value)} style={ui.input}>
+                <select value={teacherEarningsPeriod} onChange={e => setTeacherEarningsPeriod(e.target.value)} style={ui.input} className="exec-input">
                   <option value="week">Heti bontás</option>
                   <option value="month">Havi bontás</option>
                 </select>
@@ -2080,58 +2589,58 @@ export default function App() {
               {teacherEarningsPeriod === 'month' ? (
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>HÓNAP KIVÁLASZTÁSA (YYYY-MM)</label>
-                  <input type="month" value={teacherEarningsMonth} onChange={e => setTeacherEarningsMonth(e.target.value)} style={ui.input} />
+                  <input type="month" value={teacherEarningsMonth} onChange={e => setTeacherEarningsMonth(e.target.value)} style={ui.input} className="exec-input" />
                 </div>
               ) : (
                 <div style={ui.inputGroup}>
                   <label style={ui.label}>HÉT KIVÁLASZTÁSA (YYYY-Www)</label>
-                  <input type="week" value={teacherEarningsWeek} onChange={e => setTeacherEarningsWeek(e.target.value)} style={ui.input} />
+                  <input type="week" value={teacherEarningsWeek} onChange={e => setTeacherEarningsWeek(e.target.value)} style={ui.input} className="exec-input" />
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div style={{ background: '#091510', padding: '1.1rem', borderRadius: '6px', border: '1px solid #1a2922' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+              <div style={{ background: '#060d09', padding: '1.25rem', borderRadius: '8px', border: '1px solid #132219' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#60a5fa', letterSpacing: '0.5px' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: '800', color: '#60a5fa', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
                     {(user?.is_admin || user?.id === 1) ? (selectedTeacherId ? 'TANÁR BEFOLYT BRUTTÓ ÖSSZEG' : 'SAJÁT ÓRÁK (BRUTTÓ)') : 'BEFOLYT BRUTTÓ ÖSSZEG'}
                   </span>
                   <DollarSign size={18} color="#60a5fa"/>
                 </div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#ffffff', margin: '0.4rem 0 0.1rem 0' }}>
+                <h3 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#ffffff', margin: '0.5rem 0 0.1rem 0' }} className="mono-font">
                   {teacherEarningsData.totalGross.toLocaleString('hu-HU')} Ft
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.725rem', color: '#526058' }}>
                   {(user?.is_admin || user?.id === 1) ? (selectedTeacherId ? 'A kiválasztott tanár megtartott órái' : 'Saját megtartott óráid díja') : 'Diákok által fizetett összeg'}
                 </span>
               </div>
 
-              <div style={{ background: '#091510', padding: '1.1rem', borderRadius: '6px', border: '1px solid #1a2922' }}>
+              <div style={{ background: '#060d09', padding: '1.25rem', borderRadius: '8px', border: '1px solid #132219' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#f87171', letterSpacing: '0.5px' }}>
+                  <span style={{ fontSize: '0.68rem', fontWeight: '800', color: '#f87171', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
                     {(user?.is_admin || user?.id === 1) ? (selectedTeacherId ? 'LEVONT JUTALÉK' : 'KAPOTT JUTALÉK (MÁS TANÁROK)') : 'LEVONT JUTALÉK (KORNYA.KMS)'}
                   </span>
                   <TrendingUp size={18} color="#f87171"/>
                 </div>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#ffffff', margin: '0.4rem 0 0.1rem 0' }}>
+                <h3 style={{ fontSize: '1.65rem', fontWeight: '800', color: '#ffffff', margin: '0.5rem 0 0.1rem 0' }} className="mono-font">
                   {(user?.is_admin || user?.id === 1) ? (selectedTeacherId ? '-' : '+') : '-'}{teacherEarningsData.totalCommission.toLocaleString('hu-HU')} Ft
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>50p: {teacherEarningsData.count50}x1500 Ft | 100p: {teacherEarningsData.count100}x2000 Ft</span>
+                <span style={{ fontSize: '0.725rem', color: '#526058' }}>50p: {teacherEarningsData.count50}x1500 Ft | 100p: {teacherEarningsData.count100}x2000 Ft</span>
               </div>
 
-              <div style={{ background: '#0d1d16', padding: '1.1rem', borderRadius: '6px', border: '1px solid #10b981' }}>
+              <div style={{ background: '#07160e', padding: '1.25rem', borderRadius: '8px', border: '1px solid #10b981' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.7rem', fontWeight: '700', color: '#10b981', letterSpacing: '0.5px' }}>VÉGLEGES NETTÓ KERESET</span>
+                  <span style={{ fontSize: '0.68rem', fontWeight: '800', color: '#10b981', letterSpacing: '0.8px', textTransform: 'uppercase' }}>VÉGLEGES NETTÓ KERESET</span>
                   <CheckCircle2 size={18} color="#10b981"/>
                 </div>
-                <h3 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#10b981', margin: '0.4rem 0 0.1rem 0' }}>
+                <h3 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#10b981', margin: '0.5rem 0 0.1rem 0' }} className="mono-font">
                   {teacherEarningsData.netEarnings.toLocaleString('hu-HU')} Ft
                 </h3>
-                <span style={{ fontSize: '0.7rem', color: '#34d399' }}>Végső elszámolható egyenleg</span>
+                <span style={{ fontSize: '0.725rem', color: '#34d399' }}>Végső elszámolható egyenleg</span>
               </div>
             </div>
 
-            <h4 style={{ color: '#ffffff', fontSize: '0.95rem', marginBottom: '0.75rem', fontWeight: '700' }}>Részletezett Óralista az Időszakban</h4>
+            <h4 style={{ color: '#ffffff', fontSize: '0.95rem', marginBottom: '0.85rem', fontWeight: '800', letterSpacing: '-0.2px' }}>Részletezett Óralista az Időszakban</h4>
             {teacherEarningsData.lessonList.length === 0 ? (
               <p style={ui.emptyText}>A kiválasztott időszakban nincs elszámolható óra.</p>
             ) : (
@@ -2150,13 +2659,13 @@ export default function App() {
                 <tbody>
                   {teacherEarningsData.lessonList.map(item => (
                     <tr key={item.id}>
-                      <td style={ui.td}>{formatLessonTime(item.start_time, item.end_time)}</td>
+                      <td style={ui.td} className="mono-font">{formatLessonTime(item.start_time, item.end_time)}</td>
                       <td style={ui.td}>{item.student_name || 'Diák'}</td>
                       <td style={ui.td}>{item.subject}</td>
                       <td style={ui.td}>{item.durationMins} perc</td>
-                      <td style={ui.td}>{item.price.toLocaleString('hu-HU')} Ft</td>
-                      <td style={{ ...ui.td, color: '#f87171' }}>{item.commission.toLocaleString('hu-HU')} Ft</td>
-                      <td style={{ ...ui.td, color: '#10b981', fontWeight: '700' }}>{item.net.toLocaleString('hu-HU')} Ft</td>
+                      <td style={ui.td} className="mono-font">{item.price.toLocaleString('hu-HU')} Ft</td>
+                      <td style={{ ...ui.td, color: '#f87171' }} className="mono-font">{item.commission.toLocaleString('hu-HU')} Ft</td>
+                      <td style={{ ...ui.td, color: '#10b981', fontWeight: '700' }} className="mono-font">{item.net.toLocaleString('hu-HU')} Ft</td>
                     </tr>
                   ))}
                 </tbody>
@@ -2169,137 +2678,99 @@ export default function App() {
           <div>
             <div style={ui.glassCard} className="fade-in">
               <h3 style={ui.sectionTitle}><GraduationCap size={18} color="#10b981"/> Új Diák Regisztrálása</h3>
-              <form onSubmit={handleCreateStudent} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <form onSubmit={handleCreateStudent} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>TELJES NÉV</label>
-                    <input type="text" placeholder="Kovács Péter" value={newStudent.full_name} onChange={e => setNewStudent({...newStudent, full_name: e.target.value})} style={ui.input} required />
+                    <input type="text" placeholder="Kovács Péter" value={newStudent.full_name} onChange={e => setNewStudent({...newStudent, full_name: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>E-MAIL CÍM</label>
-                    <input type="email" placeholder="peter@diak.hu" value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} style={ui.input} required />
+                    <input type="email" placeholder="peter@diak.hu" value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>JELSZÓ</label>
-                    <input type="password" placeholder="••••••••" value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} style={ui.input} required />
+                    <input type="password" placeholder="••••••••" value={newStudent.password} onChange={e => setNewStudent({...newStudent, password: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>ISKOLA</label>
-                    <input type="text" placeholder="Gimnázium neve" value={newStudent.school} onChange={e => setNewStudent({...newStudent, school: e.target.value})} style={ui.input} />
+                    <input type="text" placeholder="Gimnázium neve" value={newStudent.school} onChange={e => setNewStudent({...newStudent, school: e.target.value})} style={ui.input} className="exec-input" />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>OSZTÁLY / ÉVFOLYAM</label>
-                    <input type="text" placeholder="11.B" value={newStudent.class_name} onChange={e => setNewStudent({...newStudent, class_name: e.target.value})} style={ui.input} />
+                    <input type="text" placeholder="11.B" value={newStudent.class_name} onChange={e => setNewStudent({...newStudent, class_name: e.target.value})} style={ui.input} className="exec-input" />
                   </div>
                 </div>
 
                 <div style={ui.inputGroup}>
-                  <label style={ui.label}>MEGJEGYZÉS</label>
-                  <textarea placeholder="Diákkal kapcsolatos feljegyzések..." value={newStudent.notes} onChange={e => setNewStudent({...newStudent, notes: e.target.value})} style={{ ...ui.input, height: '55px' }}></textarea>
+                  <label style={ui.label}>MEGJEGYZÉSEK</label>
+                  <textarea placeholder="Diákkal kapcsolatos jegyzetek..." value={newStudent.notes} onChange={e => setNewStudent({...newStudent, notes: e.target.value})} style={{ ...ui.input, height: '65px' }} className="exec-input"></textarea>
                 </div>
 
-                <button type="submit" style={ui.primaryBtn} className="btn-hover"><Plus size={16}/> Diák Létrehozása</button>
+                <button type="submit" style={ui.primaryBtn} className="btn-hover"><Plus size={16}/> Diák Hozzáadása</button>
               </form>
             </div>
 
-            <h3 style={ui.sectionTitle}>Regisztrált Diákok</h3>
+            <h3 style={ui.sectionTitle}>Regisztrált Diákok Listája</h3>
             <div style={ui.gridGap}>
               {students.length === 0 ? (
-                <p style={ui.emptyText}>Még nincsenek regisztrált diákok.</p>
+                <p style={ui.emptyText}>Még nincsenek regisztrált diákjaid.</p>
               ) : (
                 students.map(s => (
                   <div key={s.id} style={ui.glassCard} className="card-hover">
                     {editingStudentId === s.id ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem' }}>Diák Adatainak Szerkesztése (#{s.id})</h4>
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Diák Szerkesztése (#{s.id})</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                           <div style={ui.inputGroup}>
                             <label style={ui.label}>TELJES NÉV</label>
-                            <input 
-                              type="text" 
-                              value={editStudentData.full_name} 
-                              onChange={e => setEditStudentData({ ...editStudentData, full_name: e.target.value })} 
-                              style={ui.input} 
-                              required 
-                            />
+                            <input type="text" value={editStudentData.full_name} onChange={e => setEditStudentData({...editStudentData, full_name: e.target.value})} style={ui.input} className="exec-input" required />
                           </div>
-
                           <div style={ui.inputGroup}>
                             <label style={ui.label}>E-MAIL CÍM</label>
-                            <input 
-                              type="email" 
-                              value={editStudentData.email} 
-                              onChange={e => setEditStudentData({ ...editStudentData, email: e.target.value })} 
-                              style={ui.input} 
-                              required 
-                            />
+                            <input type="email" value={editStudentData.email} onChange={e => setEditStudentData({...editStudentData, email: e.target.value})} style={ui.input} className="exec-input" required />
                           </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
                           <div style={ui.inputGroup}>
                             <label style={ui.label}>ISKOLA</label>
-                            <input 
-                              type="text" 
-                              value={editStudentData.school} 
-                              onChange={e => setEditStudentData({ ...editStudentData, school: e.target.value })} 
-                              style={ui.input} 
-                            />
+                            <input type="text" value={editStudentData.school} onChange={e => setEditStudentData({...editStudentData, school: e.target.value})} style={ui.input} className="exec-input" />
                           </div>
-
                           <div style={ui.inputGroup}>
-                            <label style={ui.label}>OSZTÁLY</label>
-                            <input 
-                              type="text" 
-                              value={editStudentData.class_name} 
-                              onChange={e => setEditStudentData({ ...editStudentData, class_name: e.target.value })} 
-                              style={ui.input} 
-                            />
+                            <label style={ui.label}>OSZTÁLY / ÉVFOLYAM</label>
+                            <input type="text" value={editStudentData.class_name} onChange={e => setEditStudentData({...editStudentData, class_name: e.target.value})} style={ui.input} className="exec-input" />
                           </div>
                         </div>
 
                         <div style={ui.inputGroup}>
                           <label style={ui.label}>MEGJEGYZÉS</label>
-                          <textarea 
-                            value={editStudentData.notes} 
-                            onChange={e => setEditStudentData({ ...editStudentData, notes: e.target.value })} 
-                            style={{ ...ui.input, height: '55px' }} 
-                          />
+                          <textarea value={editStudentData.notes} onChange={e => setEditStudentData({...editStudentData, notes: e.target.value})} style={{ ...ui.input, height: '60px' }} className="exec-input"></textarea>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem' }}>
                           <button onClick={() => handleSaveEditStudent(s.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={15}/> Mentés</button>
                           <button onClick={() => setEditingStudentId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={15}/> Mégse</button>
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <div style={ui.cardHeaderRow}>
-                          <div>
-                            <h4 style={ui.cardTitle}>{s.full_name}</h4>
-                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{s.email}</span>
-                          </div>
-                          <div>
-                            <button onClick={() => handleStartEditStudent(s)} style={ui.editBtn} className="btn-hover"><Edit size={15}/></button>
-                            <button onClick={() => handleDeleteStudent(s.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={15}/></button>
-                          </div>
+                      <div style={ui.cardHeaderRow}>
+                        <div>
+                          <h4 style={ui.cardTitle}>{s.full_name}</h4>
+                          <p style={{ ...ui.cardDesc, color: '#10b981' }}><Mail size={14}/> {s.email}</p>
+                          {(s.school || s.class_name || s.student_class) && (
+                            <p style={ui.cardDesc}><School size={14}/> {s.school} {s.class_name || s.student_class ? `(${s.class_name || s.student_class})` : ''}</p>
+                          )}
+                          {s.notes && <p style={{ ...ui.cardDesc, color: '#526058' }}><FileText size={14}/> {s.notes}</p>}
                         </div>
-
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.8rem', color: '#94a3b8' }}>
-                          {s.school && <span>Iskola: <strong style={{ color: '#ffffff' }}>{s.school}</strong></span>}
-                          {(s.class_name || s.student_class) && <span>Osztály: <strong style={{ color: '#ffffff' }}>{s.class_name || s.student_class}</strong></span>}
+                        <div>
+                          <button onClick={() => handleStartEditStudent(s)} style={ui.editBtn} className="btn-hover"><Edit size={15}/></button>
+                          <button onClick={() => handleDeleteStudent(s.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={15}/></button>
                         </div>
-
-                        {s.notes && (
-                          <p style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.4rem', borderTop: '1px solid #121f19', paddingTop: '0.4rem' }}>
-                            Megjegyzés: {s.notes}
-                          </p>
-                        )}
-                      </>
+                      </div>
                     )}
                   </div>
                 ))
@@ -2311,180 +2782,179 @@ export default function App() {
         {(user?.is_admin || user?.id === 1) && activeTab === 'teachers' && (
           <div>
             <div style={ui.glassCard} className="fade-in">
-              <h3 style={ui.sectionTitle}><ShieldCheck size={18} color="#10b981"/> Új Tanár Hozzáadása (Admin)</h3>
-              <form onSubmit={handleCreateTeacher} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              <h3 style={ui.sectionTitle}><ShieldCheck size={18} color="#10b981"/> Új Tanár Regisztrálása (Admin)</h3>
+              <form onSubmit={handleCreateTeacher} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>TELJES NÉV</label>
-                    <input type="text" placeholder="Nagy István" value={newTeacher.full_name} onChange={e => setNewTeacher({...newTeacher, full_name: e.target.value})} style={ui.input} required />
+                    <input type="text" placeholder="Dr. Szabó Péter" value={newTeacher.full_name} onChange={e => setNewTeacher({...newTeacher, full_name: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>E-MAIL CÍM</label>
-                    <input type="email" placeholder="istvan@oktatas.hu" value={newTeacher.email} onChange={e => setNewTeacher({...newTeacher, email: e.target.value})} style={ui.input} required />
+                    <input type="email" placeholder="szabo@mentorstudio.hu" value={newTeacher.email} onChange={e => setNewTeacher({...newTeacher, email: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>JELSZÓ</label>
-                    <input type="password" placeholder="••••••••" value={newTeacher.password} onChange={e => setNewTeacher({...newTeacher, password: e.target.value})} style={ui.input} required />
+                    <input type="password" placeholder="••••••••" value={newTeacher.password} onChange={e => setNewTeacher({...newTeacher, password: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>TELEFON</label>
-                    <input type="text" placeholder="+36 30 123 4567" value={newTeacher.phone} onChange={e => setNewTeacher({...newTeacher, phone: e.target.value})} style={ui.input} />
+                    <input type="text" placeholder="+36 30 000 0000" value={newTeacher.phone} onChange={e => setNewTeacher({...newTeacher, phone: e.target.value})} style={ui.input} className="exec-input" />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>SZAK / TANTÁRGY</label>
-                    <input type="text" placeholder="Matematika" value={newTeacher.subject} onChange={e => setNewTeacher({...newTeacher, subject: e.target.value})} style={ui.input} required />
+                    <input type="text" placeholder="Matematika, Fizika" value={newTeacher.subject} onChange={e => setNewTeacher({...newTeacher, subject: e.target.value})} style={ui.input} className="exec-input" required />
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>50 PERCES ÓRADÍJ (FT)</label>
-                    <input type="number" value={newTeacher.hourly_rate_50} onChange={e => setNewTeacher({...newTeacher, hourly_rate_50: parseInt(e.target.value) || 0})} style={ui.input} required />
+                    <input type="number" value={newTeacher.hourly_rate_50} onChange={e => setNewTeacher({...newTeacher, hourly_rate_50: parseInt(e.target.value) || 0})} style={ui.input} className="exec-input" required />
                   </div>
                   <div style={ui.inputGroup}>
                     <label style={ui.label}>100 PERCES ÓRADÍJ (FT)</label>
-                    <input type="number" value={newTeacher.hourly_rate_100} onChange={e => setNewTeacher({...newTeacher, hourly_rate_100: parseInt(e.target.value) || 0})} style={ui.input} required />
+                    <input type="number" value={newTeacher.hourly_rate_100} onChange={e => setNewTeacher({...newTeacher, hourly_rate_100: parseInt(e.target.value) || 0})} style={ui.input} className="exec-input" required />
                   </div>
                 </div>
 
                 <div style={ui.inputGroup}>
-                  <label style={ui.label}>BEMUTATKOZÓ SZÖVEG</label>
-                  <textarea placeholder="Rövid leírás..." value={newTeacher.bio} onChange={e => setNewTeacher({...newTeacher, bio: e.target.value})} style={{ ...ui.input, height: '55px' }}></textarea>
+                  <label style={ui.label}>BEMUTATKOZÓ BIO</label>
+                  <textarea placeholder="Oktatói tapasztalatok, végzettség..." value={newTeacher.bio} onChange={e => setNewTeacher({...newTeacher, bio: e.target.value})} style={{ ...ui.input, height: '65px' }} className="exec-input"></textarea>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', items: 'center', gap: '0.6rem', marginTop: '0.25rem' }}>
                   <label style={ui.checkboxLabel}>
                     <input type="checkbox" checked={newTeacher.is_admin} onChange={e => setNewTeacher({...newTeacher, is_admin: e.target.checked})} style={ui.checkbox} />
-                    <span>Adminisztrátori jogosultság megadása</span>
+                    <span style={{ fontWeight: '700', color: '#10b981' }}>🛡️ Adminisztrátori jogosultság megadása</span>
                   </label>
                 </div>
 
-                <button type="submit" style={ui.primaryBtn} className="btn-hover"><Plus size={16}/> Tanár Létrehozása</button>
+                <button type="submit" style={ui.primaryBtn} className="btn-hover"><UserPlus size={16}/> Tanár Regisztrálása</button>
               </form>
             </div>
 
-            <h3 style={ui.sectionTitle}>Rendszerben Lévő Tanárok</h3>
+            <h3 style={ui.sectionTitle}>Regisztrált Tanárok Rendszerlistája</h3>
             <div style={ui.gridGap}>
-              {teachers.map(t => (
-                <div key={t.id} style={ui.glassCard} className="card-hover">
-                  {editingTeacherId === t.id ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem' }}>Tanár Szerkesztése (#{t.id})</h4>
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>TELJES NÉV</label>
-                          <input type="text" value={editTeacherData.full_name} onChange={e => setEditTeacherData({ ...editTeacherData, full_name: e.target.value })} style={ui.input} required />
+              {teachers.length === 0 ? (
+                <p style={ui.emptyText}>Még nincsenek regisztrált tanárok.</p>
+              ) : (
+                teachers.map(t => (
+                  <div key={t.id} style={ui.glassCard} className="card-hover">
+                    {editingTeacherId === t.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Tanár Szerkesztése (#{t.id})</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>TELJES NÉV</label>
+                            <input type="text" value={editTeacherData.full_name} onChange={e => setEditTeacherData({...editTeacherData, full_name: e.target.value})} style={ui.input} className="exec-input" required />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>E-MAIL CÍM</label>
+                            <input type="email" value={editTeacherData.email} onChange={e => setEditTeacherData({...editTeacherData, email: e.target.value})} style={ui.input} className="exec-input" required />
+                          </div>
                         </div>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>E-MAIL CÍM</label>
-                          <input type="email" value={editTeacherData.email} onChange={e => setEditTeacherData({ ...editTeacherData, email: e.target.value })} style={ui.input} required />
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>TELEFON</label>
-                          <input type="text" value={editTeacherData.phone} onChange={e => setEditTeacherData({ ...editTeacherData, phone: e.target.value })} style={ui.input} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.85rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>TELEFON</label>
+                            <input type="text" value={editTeacherData.phone} onChange={e => setEditTeacherData({...editTeacherData, phone: e.target.value})} style={ui.input} className="exec-input" />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>SZAK / TANTÁRGY</label>
+                            <input type="text" value={editTeacherData.subject} onChange={e => setEditTeacherData({...editTeacherData, subject: e.target.value})} style={ui.input} className="exec-input" />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>ADMIN JOG</label>
+                            <select value={editTeacherData.is_admin ? 'true' : 'false'} onChange={e => setEditTeacherData({...editTeacherData, is_admin: e.target.value === 'true'})} style={ui.input} className="exec-input">
+                              <option value="false">Nem Admin</option>
+                              <option value="true">Adminisztrátor</option>
+                            </select>
+                          </div>
                         </div>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>SZAK / TANTÁRGY</label>
-                          <input type="text" value={editTeacherData.subject} onChange={e => setEditTeacherData({ ...editTeacherData, subject: e.target.value })} style={ui.input} />
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.2rem' }}>
-                          <label style={ui.checkboxLabel}>
-                            <input type="checkbox" checked={editTeacherData.is_admin} onChange={e => setEditTeacherData({ ...editTeacherData, is_admin: e.target.checked })} style={ui.checkbox} />
-                            <span>Admin joga</span>
-                          </label>
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>50 PERCES ÓRADÍJ (FT)</label>
-                          <input type="number" value={editTeacherData.hourly_rate_50} onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_50: parseInt(e.target.value) || 0 })} style={ui.input} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>50 PERCES ÓRADÍJ (FT)</label>
+                            <input type="number" value={editTeacherData.hourly_rate_50} onChange={e => setEditTeacherData({...editTeacherData, hourly_rate_50: parseInt(e.target.value) || 0})} style={ui.input} className="exec-input" />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>100 PERCES ÓRADÍJ (FT)</label>
+                            <input type="number" value={editTeacherData.hourly_rate_100} onChange={e => setEditTeacherData({...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0})} style={ui.input} className="exec-input" />
+                          </div>
                         </div>
+
                         <div style={ui.inputGroup}>
-                          <label style={ui.label}>100 PERCES ÓRADÍJ (FT)</label>
-                          <input type="number" value={editTeacherData.hourly_rate_100} onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0 })} style={ui.input} />
+                          <label style={ui.label}>BIO</label>
+                          <textarea value={editTeacherData.bio} onChange={e => setEditTeacherData({...editTeacherData, bio: e.target.value})} style={{ ...ui.input, height: '60px' }} className="exec-input"></textarea>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem' }}>
+                          <button onClick={() => handleSaveEditTeacher(t.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={15}/> Mentés</button>
+                          <button onClick={() => setEditingTeacherId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={15}/> Mégse</button>
                         </div>
                       </div>
-
-                      <div style={ui.inputGroup}>
-                        <label style={ui.label}>BEMUTATKOZÁS</label>
-                        <textarea value={editTeacherData.bio} onChange={e => setEditTeacherData({ ...editTeacherData, bio: e.target.value })} style={{ ...ui.input, height: '55px' }} />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
-                        <button onClick={() => handleSaveEditTeacher(t.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={15}/> Mentés</button>
-                        <button onClick={() => setEditingTeacherId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={15}/> Mégse</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
+                    ) : (
                       <div style={ui.cardHeaderRow}>
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                             <h4 style={ui.cardTitle}>{t.full_name}</h4>
-                            {Boolean(t.is_admin) && <span style={{ ...ui.badge, background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', border: '1px solid rgba(234, 179, 8, 0.25)' }}>ADMIN</span>}
+                            {Boolean(t.is_admin) && <span style={ui.roleTag}>ADMIN</span>}
                           </div>
-                          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{t.email}</span>
+                          <p style={{ ...ui.cardDesc, color: '#10b981' }}><Mail size={14}/> {t.email}</p>
+                          <p style={ui.cardDesc}><BookOpen size={14}/> Szak: {t.subject || 'Nincs megadva'}</p>
+                          <div style={{ marginTop: '0.4rem', fontSize: '0.8rem', color: '#8e9b94', fontWeight: '600' }} className="mono-font">
+                            50p: {t.hourly_rate_50 || 5000} Ft | 100p: {t.hourly_rate_100 || 9000} Ft
+                          </div>
                         </div>
                         <div>
                           <button onClick={() => handleStartEditTeacher(t)} style={ui.editBtn} className="btn-hover"><Edit size={15}/></button>
                           <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={15}/></button>
                         </div>
                       </div>
-
-                      <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.5rem', fontSize: '0.8rem', color: '#94a3b8' }}>
-                        <span>Szak: <strong style={{ color: '#ffffff' }}>{t.subject || 'Nincs megadva'}</strong></span>
-                        <span>50p díj: <strong style={{ color: '#10b981' }}>{t.hourly_rate_50 || 5000} Ft</strong></span>
-                        <span>100p díj: <strong style={{ color: '#10b981' }}>{t.hourly_rate_100 || 9000} Ft</strong></span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'messages' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.25rem', minHeight: '520px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 320px) 1fr', gap: '1.5rem', minHeight: '520px' }}>
             <div style={ui.glassCard}>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: '700', color: '#10b981', marginBottom: '0.85rem', letterSpacing: '0.5px' }}>BESZÉLGETÉSEK</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              <h4 style={{ color: '#ffffff', fontSize: '0.9rem', fontWeight: '800', marginBottom: '1rem', letterSpacing: '0.5px', textTransform: 'uppercase' }}>BESZÉLGETÉSEK</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {conversations.length === 0 ? (
-                  <p style={{ color: '#475569', fontSize: '0.8rem', fontStyle: 'italic' }}>Nincsenek elérhető elbeszélgetések.</p>
+                  <p style={ui.emptyText}>Nincsenek elérhető beszélgetések.</p>
                 ) : (
                   conversations.map(c => (
-                    <button 
-                      key={c.id} 
-                      onClick={() => setSelectedUser(c)} 
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedUser(c)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justify: 'space-between',
-                        padding: '0.65rem 0.85rem',
+                        padding: '0.75rem 0.9rem',
                         borderRadius: '6px',
                         border: '1px solid',
-                        borderColor: selectedUser?.id === c.id ? '#10b981' : '#121f19',
-                        background: selectedUser?.id === c.id ? 'rgba(16, 185, 129, 0.1)' : '#060b09',
+                        borderColor: selectedUser?.id === c.id ? '#10b981' : '#132219',
+                        background: selectedUser?.id === c.id ? 'rgba(16, 185, 129, 0.1)' : '#030705',
                         color: '#ffffff',
                         cursor: 'pointer',
                         textAlign: 'left',
                         transition: 'all 0.15s ease'
                       }}
-                      className="btn-hover"
                     >
                       <div>
-                        <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{c.full_name}</div>
-                        <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{c.role === 'teacher' ? 'Tanár' : 'Diák'}</div>
+                        <span style={{ fontWeight: '700', fontSize: '0.875rem', display: 'block' }}>{c.full_name}</span>
+                        <span style={{ fontSize: '0.725rem', color: '#526058' }}>{c.role === 'teacher' ? 'Tanár' : 'Diák'}</span>
                       </div>
-                      <ChevronRight size={14} color={selectedUser?.id === c.id ? '#10b981' : '#475569'} />
+                      <ChevronRight size={16} color={selectedUser?.id === c.id ? '#10b981' : '#526058'} />
                     </button>
                   ))
                 )}
@@ -2494,80 +2964,82 @@ export default function App() {
             <div style={{ ...ui.glassCard, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               {selectedUser ? (
                 <>
-                  <div>
-                    <div style={{ borderBottom: '1px solid #1a2922', paddingBottom: '0.75rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <User size={18} color="#10b981"/>
-                      <h4 style={{ margin: 0, color: '#ffffff', fontSize: '0.95rem', fontWeight: '700' }}>{selectedUser.full_name}</h4>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '360px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                      {messages.length === 0 ? (
-                        <p style={{ color: '#475569', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', margin: '2rem 0' }}>Még nincs üzenetváltás ebben a beszélgetésben.</p>
-                      ) : (
-                        messages.map(m => {
-                          const isOwn = Number(m.sender_id) === Number(user?.id);
-                          return (
-                            <div 
-                              key={m.id} 
-                              style={{
-                                alignSelf: isOwn ? 'flex-end' : 'flex-start',
-                                maxWidth: '75%',
-                                background: isOwn ? '#0d1d16' : '#060b09',
-                                border: '1px solid',
-                                borderColor: isOwn ? '#10b981' : '#1a2922',
-                                padding: '0.6rem 0.85rem',
-                                borderRadius: '6px',
-                                color: '#ffffff',
-                                fontSize: '0.85rem'
-                              }}
-                            >
-                              <p style={{ margin: 0, lineHeight: '1.4' }}>{m.content}</p>
-                              {m.file_url && (
-                                <a 
-                                  href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#10b981', fontSize: '0.75rem', marginTop: '0.4rem', textDecoration: 'none' }}
-                                >
-                                  <Paperclip size={12}/> CSATOLMÁNY LETÖLTÉSE
-                                </a>
-                              )}
-                              <span style={{ display: 'block', fontSize: '0.65rem', color: '#475569', marginTop: '0.25rem', textAlign: 'right' }}>
-                                {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
-                          );
-                        })
-                      )}
+                  <div style={{ borderBottom: '1px solid #132219', paddingBottom: '0.85rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <h4 style={{ color: '#ffffff', fontSize: '1.05rem', fontWeight: '700' }}>{selectedUser.full_name}</h4>
+                      <span style={{ fontSize: '0.75rem', color: '#10b981' }}>{selectedUser.email}</span>
                     </div>
                   </div>
 
-                  <form onSubmit={handleSendMessage} style={{ marginTop: '1rem', borderTop: '1px solid #1a2922', paddingTop: '0.85rem' }}>
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.85rem', paddingRight: '0.5rem', maxHeight: '380px' }}>
+                    {messages.length === 0 ? (
+                      <p style={{ ...ui.emptyText, textAlign: 'center' }}>Még nincs üzenetváltás ezel a felhasználóval.</p>
+                    ) : (
+                      messages.map(m => {
+                        const isMe = Number(m.sender_id) === Number(user?.id);
+                        return (
+                          <div 
+                            key={m.id} 
+                            style={{ 
+                              alignSelf: isMe ? 'flex-end' : 'flex-start',
+                              maxWidth: '75%',
+                              background: isMe ? '#0d1f16' : '#030705',
+                              border: '1px solid',
+                              borderColor: isMe ? '#10b981' : '#132219',
+                              padding: '0.75rem 1rem',
+                              borderRadius: '8px',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                            }}
+                          >
+                            <p style={{ color: '#ffffff', fontSize: '0.875rem', lineHeight: '1.5' }}>{m.content}</p>
+                            {m.file_url && (
+                              <a 
+                                href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: '#10b981', fontSize: '0.75rem', marginTop: '0.5rem', textDecoration: 'none', fontWeight: '600' }}
+                              >
+                                <Paperclip size={13}/> Csatolt fájl letöltése
+                              </a>
+                            )}
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#526058', marginTop: '0.35rem', textAlign: 'right' }} className="mono-font">
+                              {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  <form onSubmit={handleSendMessage} style={{ marginTop: '1.25rem', borderTop: '1px solid #132219', paddingTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                     {selectedFile && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.75rem', color: '#10b981', marginBottom: '0.4rem' }}>
-                        <Paperclip size={12}/> Kiválasztva: {selectedFile.name} 
-                        <button type="button" onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.8rem' }}>✕</button>
+                      <div style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <Paperclip size={13}/> Kiválasztva: {selectedFile.name} 
+                        <button type="button" onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', marginLeft: '0.5rem' }}>✕</button>
                       </div>
                     )}
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.6rem' }}>
                       <input 
                         type="text" 
-                        placeholder="Írj üzenetet..." 
+                        placeholder="Írja be az üzenetet..." 
                         value={newMessage} 
                         onChange={e => setNewMessage(e.target.value)} 
-                        style={{ ...ui.input, flex: 1 }} 
+                        style={ui.input} 
+                        className="exec-input"
                       />
-                      <label style={{ ...ui.secondaryBtnInline, cursor: 'pointer', padding: '0.55rem 0.8rem' }}>
-                        <Paperclip size={15}/>
+                      <label style={{ ...ui.secondaryBtnInline, cursor: 'pointer', padding: '0.6rem 0.85rem' }}>
+                        <Paperclip size={16}/>
                         <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
                       </label>
-                      <button type="submit" style={ui.primaryBtnInline} className="btn-hover"><Send size={15}/></button>
+                      <button type="submit" style={{ ...ui.primaryBtn, width: 'auto', padding: '0.6rem 1.2rem' }} className="btn-hover">
+                        <Send size={16}/>
+                      </button>
                     </div>
                   </form>
                 </>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#475569', fontSize: '0.85rem' }}>
-                  Válassz ki egy beszélgetést a bal oldali sávból!
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#526058', fontSize: '0.9rem' }}>
+                  Válasszon egy beszélgetést a bal oldali sávból.
                 </div>
               )}
             </div>
@@ -2575,7 +3047,7 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} setUser={setUser} />
+          <Profile user={user} setUser={setUser} token={token} />
         )}
 
       </main>
