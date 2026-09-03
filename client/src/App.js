@@ -1500,7 +1500,7 @@ export default function App() {
         <section style={ui.heroSection}>
           <div style={ui.heroContent}>
             <div style={ui.heroBadge} className="fade-in">
-              <Shield size={14} /> Elit Akadémiai Portál
+              <Shield size={14} /> Kornya mentorstudio
             </div>
             <h1 style={ui.heroTitle} className="fade-in">{landingData.title}</h1>
             <p style={ui.heroSubtitle} className="fade-in">{landingData.subtitle}</p>
