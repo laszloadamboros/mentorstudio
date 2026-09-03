@@ -13,7 +13,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET =  process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
+const JWT_SECRET = process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
 
 // Resend e-mail kliens inicializálása
 const resend = new Resend(process.env.RESEND_API_KEY || 're_Vbrk8CUh_6dwjQFyo3V9ZqwqJV7ycmoUD');
