@@ -13,7 +13,7 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
+const JWT_SECRET = process process.env.JWT_SECRET || 'mentorstudio_super_secret_key_123';
 
 // Resend e-mail kliens inicializálása
 const resend = new Resend(process.env.RESEND_API_KEY || 're_Vbrk8CUh_6dwjQFyo3V9ZqwqJV7ycmoUD');
@@ -50,8 +50,11 @@ const db = new Pool({
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
-// Óradíj kiszámítása
-const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
+// Óradíj kiszámítása (A rendezve státuszú órák értéke 0 Ft)
+const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin, paymentStatus) => {
+  if (paymentStatus === 'settled') {
+    return 0;
+  }
   const start = new Date(startTime);
   const end = new Date(endTime);
   const diffMinutes = Math.round((end - start) / (1000 * 60));
@@ -63,7 +66,10 @@ const calculateLessonPrice = (startTime, endTime, rate50, rate100, isAdmin) => {
 };
 
 // Admin jutalék számítása
-const calculateAdminCut = (startTime, endTime) => {
+const calculateAdminCut = (startTime, endTime, paymentStatus) => {
+  if (paymentStatus === 'settled') {
+    return 0;
+  }
   const start = new Date(startTime);
   const end = new Date(endTime);
   const diffMinutes = Math.round((end - start) / (1000 * 60));
@@ -232,10 +238,7 @@ const sendWeeklyUnpaidReport = async () => {
         };
       }
       
-      let rate = 0;
-      if (row.payment_status !== 'settled') {
-        rate = calculateLessonPrice(row.start_time, row.end_time, row.hourly_rate_50, row.hourly_rate_100, isAdmin);
-      }
+      let rate = calculateLessonPrice(row.start_time, row.end_time, row.hourly_rate_50, row.hourly_rate_100, isAdmin, row.payment_status);
       
       teacherCommissions[tId].lesson_count += 1;
       teacherCommissions[tId].total_commission += rate;
@@ -656,6 +659,47 @@ app.post('/api/about-us', authenticateToken, upload.single('image'), async (req,
   }
 });
 
+// Névjegy / Bemutatkozó szerkesztés endpoint
+app.put('/api/about-us/:id', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ error: 'Nincs jogosultságod a névjegy szerkesztéséhez' });
+    }
+
+    const { name, description } = req.body;
+    if (!name || name.trim() === '') {
+      return res.status(400).json({ error: 'A név megadása kötelező' });
+    }
+
+    let result;
+    if (req.file) {
+      const imageUrl = `/uploads/${req.file.filename}`;
+      result = await db.query(`
+        UPDATE about_us 
+        SET name = $1, description = $2, image_url = $3 
+        WHERE id = $4 
+        RETURNING *
+      `, [name, description || '', imageUrl, req.params.id]);
+    } else {
+      result = await db.query(`
+        UPDATE about_us 
+        SET name = $1, description = $2 
+        WHERE id = $3 
+        RETURNING *
+      `, [name, description || '', req.params.id]);
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Névjegy nem található' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Hiba a névjegy szerkesztésekor:', err);
+    res.status(500).json({ error: 'Hiba a névjegy szerkesztésekor: ' + err.message });
+  }
+});
+
 app.delete('/api/about-us/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'teacher') return res.status(403).json({ error: 'Nincs jogosultságod' });
@@ -727,8 +771,8 @@ app.get('/api/schedule', authenticateToken, async (req, res) => {
       const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       return {
         ...l,
-        calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher),
-        admin_cut: isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time)
+        calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher, l.payment_status),
+        admin_cut: isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time, l.payment_status)
       };
     });
 
@@ -850,8 +894,8 @@ app.get('/api/teacher/all-lessons', authenticateToken, async (req, res) => {
       const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
       return {
         ...l,
-        calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher),
-        admin_cut: isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time)
+        calculated_price: calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher, l.payment_status),
+        admin_cut: isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time, l.payment_status)
       };
     });
     res.json(lessonsWithCalculations);
@@ -905,8 +949,8 @@ app.get('/api/teacher/earnings', authenticateToken, async (req, res) => {
 
     const lessonsCalculated = lessonsRes.rows.map(l => {
       const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
-      const grossPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
-      const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
+      const grossPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher, l.payment_status);
+      const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time, l.payment_status);
       const netEarnings = grossPrice - adminCut;
 
       totalGrossEarnings += grossPrice;
@@ -1323,208 +1367,6 @@ app.post('/api/messages', authenticateToken, upload.single('file'), async (req, 
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: 'Hiba az üzenet küldésekor' });
-  }
-});
-
-app.get('/api/admin/log', authenticateToken, async (req, res) => {
-  try {
-    if (!req.user.is_admin && req.user.id !== 1 && req.user.email !== 'kornya.kms@gmail.com') {
-      return res.status(403).json({ error: 'Csak adminisztrátor tekintheti meg a naplót!' });
-    }
-
-    const { period_type, month, week, teacher_id } = req.query;
-
-    let startDate, endDate;
-
-    if (period_type === 'week' && week) {
-      const parts = week.split('-W');
-      const year = parseInt(parts[0]);
-      const weekNum = parseInt(parts[1]);
-      
-      const simple = new Date(Date.UTC(year, 0, 1 + (weekNum - 1) * 7));
-      const dow = simple.getUTCDay();
-      const ISOweekStart = simple;
-      if (dow <= 4 && dow !== 0)
-        ISOweekStart.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
-      else if (dow === 0)
-        ISOweekStart.setUTCDate(simple.getUTCDate() - 6);
-      else
-        ISOweekStart.setUTCDate(simple.getUTCDate() + (8 - simple.getUTCDay()));
-      
-      startDate = new Date(ISOweekStart);
-      startDate.setUTCHours(0, 0, 0, 0);
-      endDate = new Date(startDate);
-      endDate.setUTCDate(endDate.getUTCDate() + 7);
-      endDate.setUTCHours(23, 59, 59, 999);
-    } else {
-      const selectedMonth = month || new Date().toISOString().slice(0, 7);
-      const [y, m] = selectedMonth.split('-').map(Number);
-      startDate = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
-      endDate = new Date(Date.UTC(y, m, 0, 23, 59, 59, 999));
-    }
-
-    const allLessonsRes = await db.query(`
-      SELECT
-        l.id,
-        l.teacher_id,
-        l.student_id,
-        l.start_time,
-        l.end_time,
-        l.subject,
-        l.topic,
-        l.notes,
-        l.payment_status,
-        l.is_paid,
-        l.is_recurring,
-        t.full_name AS teacher_name,
-        t.email AS teacher_email,
-        t.hourly_rate_50,
-        t.hourly_rate_100,
-        t.is_admin,
-        s.full_name AS student_name,
-        s.email AS student_email
-      FROM lessons l
-      LEFT JOIN users t ON l.teacher_id = t.id
-      LEFT JOIN users s ON l.student_id = s.id
-      ${teacher_id ? 'WHERE l.teacher_id = $1' : ''}
-      ORDER BY l.start_time DESC
-    `, teacher_id ? [teacher_id] : []);
-
-    const allLessons = allLessonsRes.rows.map(l => {
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
-      const calculatedPrice = calculateLessonPrice(l.start_time, l.end_time, l.hourly_rate_50, l.hourly_rate_100, isAdminTeacher);
-      const adminCut = isAdminTeacher ? 0 : calculateAdminCut(l.start_time, l.end_time);
-
-      const lessonDate = new Date(l.start_time);
-      const inPeriod = lessonDate >= startDate && lessonDate <= endDate;
-
-      return {
-        ...l,
-        calculated_price: calculatedPrice,
-        admin_cut: adminCut,
-        admin_share: adminCut,
-        in_period: inPeriod
-      };
-    });
-
-    const lessonsWithPrices = allLessons.filter(l => l.in_period);
-
-    let period_revenue = 0, cumulative_revenue = 0;
-    let period_cash = 0, period_transfer = 0, period_settled = 0;
-    let total_cash = 0, total_transfer = 0, total_unpaid = 0;
-
-    let admin_own_revenue = 0;
-    let admin_commission_from_non_admins = 0;
-
-    const teacherMap = {};
-    const studentMap = {};
-
-    allLessons.forEach(l => {
-      const price = l.calculated_price;
-      const isAdminTeacher = Boolean(l.is_admin) || l.teacher_id === 1 || l.teacher_email === 'kornya.kms@gmail.com';
-      const cut = l.admin_cut;
-
-      const isCash = l.payment_status === 'cash';
-      const isTransfer = l.payment_status === 'transfer';
-      const isSettled = l.payment_status === 'settled';
-      const isPaid = l.is_paid || isCash || isTransfer;
-      const isUnpaid = !isPaid && !isSettled;
-
-      if (l.in_period) {
-        if (isAdminTeacher) {
-          admin_own_revenue += price;
-        } else {
-          admin_commission_from_non_admins += cut;
-        }
-      }
-
-      if (l.teacher_id) {
-        if (!teacherMap[l.teacher_id]) {
-          teacherMap[l.teacher_id] = {
-            teacher_name: l.teacher_name,
-            is_admin: isAdminTeacher,
-            hourly_rate_50: l.hourly_rate_50,
-            hourly_rate_100: l.hourly_rate_100,
-            period_lessons: 0,
-            total_lessons: 0,
-            period_revenue: 0,
-            period_commission: 0
-          };
-        }
-        teacherMap[l.teacher_id].total_lessons += 1;
-        if (l.in_period) {
-          teacherMap[l.teacher_id].period_lessons += 1;
-          teacherMap[l.teacher_id].period_revenue += price;
-          teacherMap[l.teacher_id].period_commission += cut;
-        }
-      }
-
-      if (l.student_id) {
-        if (!studentMap[l.student_id]) {
-          studentMap[l.student_id] = {
-            student_name: l.student_name,
-            student_email: l.student_email,
-            period_lessons: 0,
-            period_paid: 0,
-            total_lessons: 0,
-            total_paid: 0
-          };
-        }
-        studentMap[l.student_id].total_lessons += 1;
-        if (l.in_period) studentMap[l.student_id].period_lessons += 1;
-
-        if (!isSettled && isPaid) {
-          studentMap[l.student_id].total_paid += price;
-          if (l.in_period) studentMap[l.student_id].period_paid += price;
-        }
-      }
-
-      if (isCash) {
-        total_cash += price;
-        if (l.in_period) period_cash += price;
-      } else if (isTransfer) {
-        total_transfer += price;
-        if (l.in_period) period_transfer += price;
-      } else if (isUnpaid) {
-        total_unpaid += price;
-      }
-      if (isSettled && l.in_period) {
-        period_settled += price;
-      }
-
-      if (!isSettled && isPaid) {
-        cumulative_revenue += price;
-        if (l.in_period) period_revenue += price;
-      }
-    });
-
-    const total_admin_earnings = admin_own_revenue + admin_commission_from_non_admins;
-    const teachers_stats = Object.values(teacherMap).sort((a, b) => b.period_lessons - a.period_lessons);
-    const students_stats = Object.values(studentMap).sort((a, b) => b.period_lessons - a.period_lessons);
-
-    res.json({
-      lessons: lessonsWithPrices,
-      total_lessons: lessonsWithPrices.length,
-      period_revenue,
-      cumulative_revenue,
-      period_cash,
-      period_transfer,
-      period_settled,
-      total_cash,
-      total_transfer,
-      total_unpaid,
-      admin_own_revenue,
-      admin_commission_from_non_admins,
-      total_admin_earnings,
-      admin_cut: total_admin_earnings,
-      admin_jutalek: total_admin_earnings,
-      teachers_stats,
-      students_stats
-    });
-
-  } catch (err) {
-    console.error('Napló lekérdezési hiba:', err);
-    res.status(500).json({ error: 'Hiba az ügyviteli napló adatok lekérésekor' });
   }
 });
 
