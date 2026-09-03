@@ -4,7 +4,7 @@ import {
   Plus, Trash2, GraduationCap, Sparkles, ChevronRight, UserPlus, ShieldCheck,
   Megaphone, Pin, MessageSquare, Send, Search, CheckCircle2, AlertCircle, FileText,
   Users, CreditCard, KeyRound, ArrowLeft, Paperclip, Download, LogIn, MapPin, Layout,
-  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat, Save, X, Calculator, School
+  FileSpreadsheet, Printer, TrendingUp, DollarSign, CheckSquare, BarChart3, PieChart, Edit, Repeat, Save, X, Calculator, School, ChevronDown
 } from 'lucide-react';
 import Profile from './profil';
 import ScheduleView from './ScheduleView';
@@ -35,12 +35,56 @@ const animations = `
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+  .fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-  .btn-hover { transition: all 0.2s ease-in-out; }
-  .btn-hover:hover { transform: translateY(-2px); filter: brightness(1.1); }
-  .card-hover { transition: all 0.25s ease-in-out; }
-  .card-hover:hover { transform: translateY(-3px); border-color: rgba(52, 211, 153, 0.4) !important; }
+  .btn-hover { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+  .btn-hover:hover { transform: translateY(-2px); filter: brightness(1.15); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); }
+  .card-hover { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+  .card-hover:hover { transform: translateY(-4px); border-color: rgba(52, 211, 153, 0.5) !important; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+  
+  .glass-effect {
+    background: rgba(10, 25, 18, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(52, 211, 153, 0.18);
+  }
+
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: rgba(8, 20, 14, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    border-radius: 12px;
+    padding: 0.5rem;
+    min-width: 200px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+    z-index: 1000;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    color: #cbd5e1;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: left;
+  }
+
+  .dropdown-item:hover {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+  }
+
   @media print {
     body * { visibility: hidden; }
     #printable-earnings-section, #printable-earnings-section * { visibility: visible; }
@@ -50,66 +94,65 @@ const animations = `
 `;
 
 const ui = {
-  landingPageContainer: { minHeight: '100vh', backgroundColor: '#060d08', color: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' },
-  publicHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 2.5rem', background: 'rgba(9, 20, 14, 0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(52, 211, 153, 0.15)', sticky: 'top', top: 0, zIndex: 100 },
-  navBrand: { display: 'flex', alignItems: 'center', gap: '0.8rem' },
-  brandText: { fontSize: '1.35rem', fontWeight: '800', background: 'linear-gradient(135deg, #ffffff 0%, #34d399 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-  heroSection: { padding: '5rem 2rem', textAlign: 'center', background: 'radial-gradient(circle at center, rgba(52, 211, 153, 0.12) 0%, rgba(6, 13, 8, 0) 70%)' },
-  heroContent: { maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' },
-  heroTitle: { fontSize: '3rem', fontWeight: '900', color: '#fff', marginBottom: '1rem', letterSpacing: '-0.5px' },
-  heroSubtitle: { fontSize: '1.25rem', color: '#94a3b8', lineHeight: '1.6', maxWidth: '650px' },
-  sectionContainer: { maxWidth: '1100px', margin: '0 auto', padding: '4rem 1.5rem' },
-  landingGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2.5rem', alignItems: 'center' },
-  landingSectionTitle: { fontSize: '2rem', fontWeight: '800', color: '#fff', marginBottom: '1rem' },
-  landingText: { color: '#cbd5e1', fontSize: '1.05rem', lineHeight: '1.7' },
-  placeholderTeamBox: { width: '100%', height: '240px', background: 'rgba(15, 35, 24, 0.5)', borderRadius: '16px', border: '2px dashed rgba(52, 211, 153, 0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
-  activitiesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.5rem' },
-  activityCard: { background: 'rgba(15, 30, 22, 0.6)', border: '1px solid rgba(52, 211, 153, 0.2)', padding: '1.5rem', borderRadius: '14px', textAlign: 'center' },
-  contactGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' },
-  contactCard: { background: 'rgba(15, 30, 22, 0.6)', border: '1px solid rgba(52, 211, 153, 0.2)', padding: '1.5rem', borderRadius: '14px', textAlign: 'center' },
-  publicFooter: { padding: '2rem', textAlign: 'center', color: '#64748b', borderTop: '1px solid rgba(52, 211, 153, 0.1)', background: '#040805' },
-  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' },
-  loginCard: { background: '#0b1911', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '2.2rem', borderRadius: '20px', width: '100%', maxWidth: '420px', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' },
-  brandHeader: { marginBottom: '1.5rem', textAlign: 'center' },
-  loginTitle: { fontSize: '1.6rem', fontWeight: '800', color: '#fff' },
-  loginSubtitle: { fontSize: '0.9rem', color: '#94a3b8', marginTop: '0.3rem' },
+  landingPageContainer: { minHeight: '100vh', backgroundColor: '#030805', color: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' },
+  publicHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.2rem 3rem', background: 'rgba(5, 15, 10, 0.75)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(52, 211, 153, 0.15)', position: 'sticky', top: 0, zIndex: 100 },
+  navBrand: { display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' },
+  brandText: { fontSize: '1.4rem', fontWeight: '800', background: 'linear-gradient(135deg, #ffffff 30%, #34d399 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px' },
+  heroSection: { padding: '7rem 2rem', textAlign: 'center', background: 'radial-gradient(circle at 50% 30%, rgba(16, 185, 129, 0.15) 0%, rgba(3, 8, 5, 0) 65%)', position: 'relative' },
+  heroContent: { maxWidth: '850px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' },
+  heroTitle: { fontSize: '3.8rem', fontWeight: '900', color: '#fff', marginBottom: '1.2rem', letterSpacing: '-1.5px', lineHeight: '1.1' },
+  heroSubtitle: { fontSize: '1.3rem', color: '#94a3b8', lineHeight: '1.6', maxWidth: '680px' },
+  sectionContainer: { maxWidth: '1150px', margin: '0 auto', padding: '5rem 1.5rem' },
+  landingGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '3rem', alignItems: 'center' },
+  landingSectionTitle: { fontSize: '2.2rem', fontWeight: '800', color: '#fff', marginBottom: '1.2rem', letterSpacing: '-0.5px' },
+  landingText: { color: '#cbd5e1', fontSize: '1.1rem', lineHeight: '1.8' },
+  placeholderTeamBox: { width: '100%', height: '280px', background: 'rgba(10, 25, 18, 0.5)', borderRadius: '20px', border: '2px dashed rgba(52, 211, 153, 0.3)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
+  activitiesGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' },
+  activityCard: { background: 'rgba(10, 25, 18, 0.65)', backdropFilter: 'blur(12px)', border: '1px solid rgba(52, 211, 153, 0.2)', padding: '2rem 1.5rem', borderRadius: '18px', textAlign: 'center' },
+  contactGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.8rem' },
+  contactCard: { background: 'rgba(10, 25, 18, 0.65)', backdropFilter: 'blur(12px)', border: '1px solid rgba(52, 211, 153, 0.2)', padding: '2rem 1.5rem', borderRadius: '18px', textAlign: 'center' },
+  publicFooter: { padding: '2.5rem', textAlign: 'center', color: '#64748b', borderTop: '1px solid rgba(52, 211, 153, 0.1)', background: '#020503' },
+  modalOverlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(2, 6, 4, 0.82)', backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' },
+  loginCard: { background: '#07150d', border: '1px solid rgba(52, 211, 153, 0.35)', padding: '2.5rem', borderRadius: '24px', width: '100%', maxWidth: '440px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)' },
+  brandHeader: { marginBottom: '1.8rem', textAlign: 'center' },
+  loginTitle: { fontSize: '1.8rem', fontWeight: '800', color: '#fff', letterSpacing: '-0.5px' },
+  loginSubtitle: { fontSize: '0.95rem', color: '#94a3b8', marginTop: '0.4rem' },
   formGap: { display: 'flex', flexDirection: 'column', gap: '1.2rem' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '0.4rem' },
-  label: { fontSize: '0.75rem', fontWeight: '700', color: '#34d399', letterSpacing: '0.5px' },
-  input: { background: 'rgba(5, 15, 10, 0.7)', border: '1px solid rgba(52, 211, 153, 0.25)', padding: '0.8rem 1rem', borderRadius: '10px', color: '#fff', fontSize: '0.95rem', outline: 'none' },
-  primaryBtn: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '0.85rem 1.2rem', borderRadius: '10px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%' },
-  primaryBtnInline: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '0.6rem 1.4rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  secondaryBtnInline: { background: 'rgba(255, 255, 255, 0.1)', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.2)', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' },
-  linkBtn: { background: 'none', border: 'none', color: '#34d399', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' },
-  errorBadge: { background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.7rem', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
-  successBadge: { background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', padding: '0.7rem', borderRadius: '8px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
-  appLayout: { minHeight: '100vh', backgroundColor: '#060d08', color: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' },
-  navbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', background: 'rgba(9, 20, 14, 0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(52, 211, 153, 0.15)' },
-  roleTag: { background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', fontSize: '0.7rem', fontWeight: '800', padding: '0.2rem 0.5rem', borderRadius: '6px' },
-  navLinks: { display: 'flex', gap: '0.5rem', overflowX: 'auto' },
-  tabBtn: { background: 'transparent', border: 'none', color: '#94a3b8', padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.9rem', transition: 'all 0.2s' },
-  activeTab: { background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '0.9rem' },
-  logoutBtn: { background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' },
-  mainContent: { maxWidth: '1100px', margin: '2rem auto', padding: '0 1.5rem' },
-  glassCard: { background: 'rgba(15, 30, 22, 0.6)', border: '1px solid rgba(52, 211, 153, 0.15)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem' },
-  pinnedCard: { background: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.4)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem' },
-  highlightCard: { background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.05) 100%)', border: '1px solid rgba(52, 211, 153, 0.4)', borderRadius: '16px', padding: '1.5rem', marginBottom: '1.5rem' },
-  sectionTitle: { fontSize: '1.3rem', fontWeight: '800', color: '#fff', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  label: { fontSize: '0.75rem', fontWeight: '700', color: '#34d399', letterSpacing: '0.8px' },
+  input: { background: 'rgba(3, 10, 6, 0.7)', border: '1px solid rgba(52, 211, 153, 0.25)', padding: '0.85rem 1.1rem', borderRadius: '12px', color: '#fff', fontSize: '0.95rem', outline: 'none', transition: 'all 0.2s ease' },
+  primaryBtn: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '0.9rem 1.4rem', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)' },
+  primaryBtnInline: { background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: '#fff', border: 'none', padding: '0.65rem 1.4rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' },
+  secondaryBtnInline: { background: 'rgba(255, 255, 255, 0.08)', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.18)', padding: '0.55rem 1.1rem', borderRadius: '10px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem' },
+  linkBtn: { background: 'none', border: 'none', color: '#34d399', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'none', fontWeight: '600' },
+  errorBadge: { background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.8rem', borderRadius: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
+  successBadge: { background: 'rgba(52, 211, 153, 0.15)', border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399', padding: '0.8rem', borderRadius: '10px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' },
+  appLayout: { minHeight: '100vh', backgroundColor: '#030805', color: '#f8fafc', fontFamily: 'system-ui, -apple-system, sans-serif' },
+  navbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 3rem', background: 'rgba(5, 15, 10, 0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(52, 211, 153, 0.15)', position: 'sticky', top: 0, zIndex: 100 },
+  roleTag: { background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', fontSize: '0.7rem', fontWeight: '800', padding: '0.25rem 0.6rem', borderRadius: '8px', letterSpacing: '0.5px' },
+  navLinks: { display: 'flex', gap: '0.6rem', alignItems: 'center' },
+  logoutBtn: { background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)', color: '#f87171', padding: '0.6rem 1.1rem', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' },
+  mainContent: { maxWidth: '1150px', margin: '2.5rem auto', padding: '0 1.5rem' },
+  glassCard: { background: 'rgba(10, 25, 18, 0.65)', backdropFilter: 'blur(16px)', border: '1px solid rgba(52, 211, 153, 0.18)', borderRadius: '20px', padding: '1.8rem', marginBottom: '1.8rem', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' },
+  pinnedCard: { background: 'rgba(234, 179, 8, 0.06)', backdropFilter: 'blur(16px)', border: '1px solid rgba(234, 179, 8, 0.35)', borderRadius: '20px', padding: '1.8rem', marginBottom: '1.8rem' },
+  highlightCard: { background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.18) 0%, rgba(5, 150, 105, 0.04) 100%)', backdropFilter: 'blur(16px)', border: '1px solid rgba(52, 211, 153, 0.4)', borderRadius: '20px', padding: '1.8rem', marginBottom: '1.8rem' },
+  sectionTitle: { fontSize: '1.35rem', fontWeight: '800', color: '#fff', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.6rem', letterSpacing: '-0.3px' },
   cardHeaderRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.8rem' },
-  cardTitle: { fontSize: '1.1rem', fontWeight: '700', color: '#fff' },
-  cardDesc: { color: '#cbd5e1', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' },
-  deleteBtn: { background: 'rgba(239, 68, 68, 0.15)', border: 'none', color: '#f87171', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' },
-  editBtn: { background: 'rgba(52, 211, 153, 0.15)', border: 'none', color: '#34d399', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer', marginRight: '0.5rem' },
+  cardTitle: { fontSize: '1.15rem', fontWeight: '700', color: '#fff' },
+  cardDesc: { color: '#cbd5e1', fontSize: '0.92rem', display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.4rem' },
+  deleteBtn: { background: 'rgba(239, 68, 68, 0.15)', border: 'none', color: '#f87171', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer' },
+  editBtn: { background: 'rgba(52, 211, 153, 0.15)', border: 'none', color: '#34d399', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', marginRight: '0.5rem' },
   emptyText: { color: '#64748b', fontStyle: 'italic', padding: '1rem 0' },
-  gridGap: { display: 'flex', flexDirection: 'column', gap: '1rem' },
-  pinTag: { background: 'rgba(234, 179, 8, 0.2)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.4)', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.2rem' },
-  checkboxLabel: { display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.9rem' },
-  checkbox: { accentColor: '#10b981', width: '16px', height: '16px', cursor: 'pointer' },
-  badge: { background: 'rgba(52, 211, 153, 0.2)', color: '#34d399', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' },
-  timeTag: { background: 'rgba(255, 255, 255, 0.05)', color: '#cbd5e1', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600' },
+  gridGap: { display: 'flex', flexDirection: 'column', gap: '1.2rem' },
+  pinTag: { background: 'rgba(234, 179, 8, 0.2)', color: '#facc15', border: '1px solid rgba(234, 179, 8, 0.4)', fontSize: '0.7rem', padding: '0.2rem 0.5rem', borderRadius: '6px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.2rem' },
+  checkboxLabel: { display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#cbd5e1', cursor: 'pointer', fontSize: '0.9rem' },
+  checkbox: { accentColor: '#10b981', width: '18px', height: '18px', cursor: 'pointer' },
+  badge: { background: 'rgba(52, 211, 153, 0.18)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '0.25rem 0.7rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' },
+  timeTag: { background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#cbd5e1', padding: '0.25rem 0.7rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '600' },
   table: { width: '100%', borderCollapse: 'collapse', color: '#cbd5e1', marginTop: '1rem' },
-  th: { textAlign: 'left', padding: '0.75rem', borderBottom: '2px solid rgba(52, 211, 153, 0.3)', color: '#34d399', fontSize: '0.85rem' },
-  td: { padding: '0.75rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', fontSize: '0.9rem' }
+  th: { textAlign: 'left', padding: '0.85rem', borderBottom: '2px solid rgba(52, 211, 153, 0.3)', color: '#34d399', fontSize: '0.85rem', fontWeight: '700' },
+  td: { padding: '0.85rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', fontSize: '0.9rem' },
+  welcomeHeader: { background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.03) 100%)', border: '1px solid rgba(52, 211, 153, 0.25)', borderRadius: '24px', padding: '2rem', marginBottom: '2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', alignItems: 'center' }
 };
 
 export default function App() {
@@ -121,6 +164,15 @@ export default function App() {
       return null;
     }
   });
+
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const [isNavDropdownOpen, setIsNavDropdownOpen] = useState(false);
 
   const [landingData, setLandingData] = useState({
     title: 'Kornya Mentorstúdió',
@@ -946,7 +998,7 @@ export default function App() {
         
         <header style={ui.publicHeader}>
           <div style={ui.navBrand}>
-            <img src={logoSrc} alt="Logo" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+            <img src={logoSrc} alt="Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
             <span style={ui.brandText}>{landingData.title}</span>
           </div>
           <button 
@@ -960,12 +1012,12 @@ export default function App() {
 
         <section style={ui.heroSection}>
           <div style={ui.heroContent}>
-            <img src={logoSrc} alt="Logo" style={{ width: '120px', height: '120px', objectFit: 'contain', marginBottom: '1rem' }} className="fade-in-up" />
+            <img src={logoSrc} alt="Logo" style={{ width: '130px', height: '130px', objectFit: 'contain', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 25px rgba(52, 211, 153, 0.4))' }} className="fade-in-up" />
             <h1 style={ui.heroTitle} className="fade-in-up">{landingData.title}</h1>
             <p style={ui.heroSubtitle} className="fade-in-up">{landingData.subtitle}</p>
             <button 
               onClick={() => setShowLoginModal(true)} 
-              style={{ ...ui.primaryBtn, width: 'auto', padding: '0.9rem 2.2rem', fontSize: '1.1rem', marginTop: '1.5rem' }} 
+              style={{ ...ui.primaryBtn, width: 'auto', padding: '1rem 2.5rem', fontSize: '1.1rem', marginTop: '2rem' }} 
               className="btn-hover fade-in-up"
             >
               Belépés az Oktatási Portálra <ChevronRight size={20}/>
@@ -985,49 +1037,49 @@ export default function App() {
                 <img 
                   src={teamImageSrc} 
                   alt="Csapatkép" 
-                  style={{ width: '100%', maxWidth: '500px', borderRadius: '16px', border: '2px solid rgba(52, 211, 153, 0.3)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} 
+                  style={{ width: '100%', maxWidth: '520px', borderRadius: '20px', border: '1px solid rgba(52, 211, 153, 0.3)', boxShadow: '0 20px 40px rgba(0,0,0,0.6)' }} 
                 />
               </div>
             ) : (
               <div style={ui.placeholderTeamBox}>
                 <Users size={48} color="#34d399"/>
-                <p style={{ marginTop: '0.5rem', color: '#a7f3d0' }}>Csapatkép hamarosan...</p>
+                <p style={{ marginTop: '0.8rem', color: '#a7f3d0', fontWeight: '600' }}>Csapatkép hamarosan...</p>
               </div>
             )}
           </div>
         </section>
 
-        <section style={{ ...ui.sectionContainer, background: 'rgba(15, 35, 24, 0.4)' }}>
-          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '2rem' }}>Tevékenységi Köreink</h2>
+        <section style={{ ...ui.sectionContainer, background: 'rgba(10, 25, 18, 0.35)', borderRadius: '32px', border: '1px solid rgba(52, 211, 153, 0.1)' }}>
+          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '2.5rem' }}>Tevékenységi Köreink</h2>
           <div style={ui.activitiesGrid}>
             {landingData.activities.split(',').map((act, idx) => (
               <div key={idx} style={ui.activityCard} className="card-hover">
-                <Sparkles size={24} color="#34d399" style={{ marginBottom: '0.5rem' }} />
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#fff' }}>{act.trim()}</h3>
+                <Sparkles size={28} color="#34d399" style={{ marginBottom: '0.8rem' }} />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: '#fff' }}>{act.trim()}</h3>
               </div>
             ))}
           </div>
         </section>
 
         <section style={ui.sectionContainer}>
-          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '2rem' }}>Kapcsolat & Elérhetőségek</h2>
+          <h2 style={{ ...ui.landingSectionTitle, textAlign: 'center', marginBottom: '2.5rem' }}>Kapcsolat & Elérhetőségek</h2>
           <div style={ui.contactGrid}>
-            <div style={ui.contactCard}>
-              <Phone size={24} color="#34d399"/>
-              <h4 style={{ color: '#a7f3d0', margin: '0.5rem 0 0.2rem 0' }}>Telefon</h4>
-              <p style={{ color: '#fff', fontWeight: '600' }}>{landingData.phone}</p>
+            <div style={ui.contactCard} className="card-hover">
+              <Phone size={28} color="#34d399"/>
+              <h4 style={{ color: '#a7f3d0', margin: '0.8rem 0 0.3rem 0', fontSize: '1.1rem' }}>Telefon</h4>
+              <p style={{ color: '#fff', fontWeight: '600', fontSize: '1.05rem' }}>{landingData.phone}</p>
             </div>
 
-            <div style={ui.contactCard}>
-              <Mail size={24} color="#34d399"/>
-              <h4 style={{ color: '#a7f3d0', margin: '0.5rem 0 0.2rem 0' }}>E-mail</h4>
-              <p style={{ color: '#fff', fontWeight: '600' }}>{landingData.email}</p>
+            <div style={ui.contactCard} className="card-hover">
+              <Mail size={28} color="#34d399"/>
+              <h4 style={{ color: '#a7f3d0', margin: '0.8rem 0 0.3rem 0', fontSize: '1.1rem' }}>E-mail</h4>
+              <p style={{ color: '#fff', fontWeight: '600', fontSize: '1.05rem' }}>{landingData.email}</p>
             </div>
 
-            <div style={ui.contactCard}>
-              <MapPin size={24} color="#34d399"/>
-              <h4 style={{ color: '#a7f3d0', margin: '0.5rem 0 0.2rem 0' }}>Címünk</h4>
-              <p style={{ color: '#fff', fontWeight: '600' }}>{landingData.address}</p>
+            <div style={ui.contactCard} className="card-hover">
+              <MapPin size={28} color="#34d399"/>
+              <h4 style={{ color: '#a7f3d0', margin: '0.8rem 0 0.3rem 0', fontSize: '1.1rem' }}>Címünk</h4>
+              <p style={{ color: '#fff', fontWeight: '600', fontSize: '1.05rem' }}>{landingData.address}</p>
             </div>
           </div>
         </section>
@@ -1039,13 +1091,13 @@ export default function App() {
         {(showLoginModal || resetToken) && (
           <div style={ui.modalOverlay}>
             <div style={ui.loginCard} className="fade-in-up">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <img src={logoSrc} alt="Logo" style={{ width: '32px', height: '32px' }} />
-                  <span style={{ fontWeight: '700', color: '#fff' }}>{landingData.title}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <img src={logoSrc} alt="Logo" style={{ width: '36px', height: '36px' }} />
+                  <span style={{ fontWeight: '800', color: '#fff', fontSize: '1.1rem' }}>{landingData.title}</span>
                 </div>
                 {!resetToken && (
-                  <button onClick={() => setShowLoginModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.2rem', cursor: 'pointer' }}>✕</button>
+                  <button onClick={() => setShowLoginModal(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.4rem', cursor: 'pointer' }}>✕</button>
                 )}
               </div>
 
@@ -1095,7 +1147,7 @@ export default function App() {
                       setSuccessMsg('');
                       window.history.replaceState({}, document.title, "/");
                     }} 
-                    style={{ ...ui.tabBtn, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
+                    style={{ ...ui.secondaryBtnInline, width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
                     className="btn-hover"
                   >
                     <ArrowLeft size={16} /> Vissza a bejelentkezéshez
@@ -1169,7 +1221,7 @@ export default function App() {
                       setError('');
                       setSuccessMsg('');
                     }} 
-                    style={{ ...ui.tabBtn, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
+                    style={{ ...ui.secondaryBtnInline, width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
                     className="btn-hover"
                   >
                     <ArrowLeft size={16} /> Vissza a bejelentkezéshez
@@ -1185,62 +1237,146 @@ export default function App() {
 
   const teacherEarningsData = calculateTeacherEarnings();
 
+  const getMenuTabs = () => {
+    const tabs = [
+      { id: 'news', label: 'Hírfolyam', icon: Megaphone },
+      { id: 'about', label: 'Névjegy', icon: Users }
+    ];
+
+    if (user?.role === 'student') {
+      tabs.push(
+        { id: 'events', label: 'Óráim', icon: BookOpen },
+        { id: 'searchTeachers', label: 'Tanárkereső', icon: Search },
+        { id: 'contact', label: 'Tanárom', icon: Phone }
+      );
+    } else {
+      tabs.push(
+        { id: 'calendar', label: 'Naptár', icon: CalendarIcon },
+        { id: 'students', label: 'Diákok', icon: GraduationCap },
+        { id: 'earnings', label: 'Kereset kimutatás', icon: Calculator }
+      );
+
+      if (user?.is_admin || user?.id === 1) {
+        tabs.push(
+          { id: 'teachers', label: 'Tanárok', icon: ShieldCheck },
+          { id: 'editLanding', label: 'Kezdőlap szerkesztése', icon: Layout }
+        );
+      }
+    }
+
+    tabs.push(
+      { id: 'messages', label: 'Üzenetek', icon: MessageSquare },
+      { id: 'profile', label: 'Profil', icon: User }
+    );
+
+    return tabs;
+  };
+
+  const navTabs = getMenuTabs();
+  const currentActiveTabObj = navTabs.find(t => t.id === activeTab) || navTabs[0];
+
   return (
     <div style={ui.appLayout}>
       <style>{animations}</style>
       
       <header style={ui.navbar}>
-        <div style={ui.navBrand}>
+        <div style={ui.navBrand} onClick={() => setActiveTab('news')}>
           <img src={logoSrc} alt="Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
           <span style={ui.brandText}>{landingData.title}</span>
           <span style={ui.roleTag}>{(user?.is_admin || user?.id === 1) ? 'ADMIN' : (user?.role === 'teacher' ? 'TANÁR' : 'DIÁK')}</span>
         </div>
 
         <nav style={ui.navLinks}>
-          <button onClick={() => setActiveTab('news')} style={activeTab === 'news' ? ui.activeTab : ui.tabBtn}>Hírfolyam</button>
-          <button onClick={() => setActiveTab('about')} style={activeTab === 'about' ? ui.activeTab : ui.tabBtn}>Névjegy</button>
-          
-          {user?.role === 'student' ? (
-            <>
-              <button onClick={() => setActiveTab('events')} style={activeTab === 'events' ? ui.activeTab : ui.tabBtn}>Óráim</button>
-              <button onClick={() => setActiveTab('searchTeachers')} style={activeTab === 'searchTeachers' ? ui.activeTab : ui.tabBtn}>Tanárkereső</button>
-              <button onClick={() => setActiveTab('contact')} style={activeTab === 'contact' ? ui.activeTab : ui.tabBtn}>Tanárom</button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => setActiveTab('calendar')} style={activeTab === 'calendar' ? ui.activeTab : ui.tabBtn}>Naptár</button>
-              <button onClick={() => setActiveTab('students')} style={activeTab === 'students' ? ui.activeTab : ui.tabBtn}>Diákok</button>
-              
-              <button onClick={() => setActiveTab('earnings')} style={activeTab === 'earnings' ? ui.activeTab : ui.tabBtn}>
-                <Calculator size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }}/> Kereset kimutatás
-              </button>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)} 
+              style={{
+                background: 'rgba(52, 211, 153, 0.15)',
+                border: '1px solid rgba(52, 211, 153, 0.35)',
+                color: '#34d399',
+                padding: '0.65rem 1.2rem',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: '0.95rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem'
+              }}
+              className="btn-hover"
+            >
+              <currentActiveTabObj.icon size={18} />
+              <span>{currentActiveTabObj.label}</span>
+              <ChevronDown size={16} style={{ transform: isNavDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+            </button>
 
-              {(user?.is_admin || user?.id === 1) && (
-                <>
-                  <button onClick={() => setActiveTab('teachers')} style={activeTab === 'teachers' ? ui.activeTab : ui.tabBtn}>Tanárok</button>
-                  <button onClick={() => setActiveTab('editLanding')} style={activeTab === 'editLanding' ? ui.activeTab : ui.tabBtn}>
-                    <Layout size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }}/> Kezdőlap szerkesztése
-                  </button>
-                </>
-              )}
-            </>
-          )}
+            {isNavDropdownOpen && (
+              <div className="dropdown-menu fade-in-up">
+                {navTabs.map(tab => {
+                  const Icon = tab.icon;
+                  return (
+                    <button 
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setIsNavDropdownOpen(false);
+                      }}
+                      className="dropdown-item"
+                      style={{
+                        background: activeTab === tab.id ? 'rgba(52, 211, 153, 0.2)' : 'transparent',
+                        color: activeTab === tab.id ? '#34d399' : '#cbd5e1',
+                        fontWeight: activeTab === tab.id ? '700' : '500'
+                      }}
+                    >
+                      <Icon size={16} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-          <button onClick={() => setActiveTab('messages')} style={activeTab === 'messages' ? ui.activeTab : ui.tabBtn}>
-            <MessageSquare size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }}/> Üzenetek
-          </button>
-
-          <button onClick={() => setActiveTab('profile')} style={activeTab === 'profile' ? ui.activeTab : ui.tabBtn}>
-            <User size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }}/> Profil
+          <button onClick={handleLogout} style={ui.logoutBtn} className="btn-hover">
+            <LogOut size={16} /> Kilépés
           </button>
         </nav>
-
-        <button onClick={handleLogout} style={ui.logoutBtn} className="btn-hover">
-          <LogOut size={16} /> Kilépés
-        </button>
       </header>
 
       <main style={ui.mainContent} className="fade-in">
+
+        <div style={ui.welcomeHeader} className="fade-in-up">
+          <div>
+            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#fff', margin: 0, letterSpacing: '-0.5px' }}>
+              Üdvözöljük újra, <span style={{ color: '#34d399' }}>{user?.full_name || 'Felhasználó'}</span>!
+            </h2>
+            <p style={{ color: '#94a3b8', margin: '0.4rem 0 0 0', fontSize: '1rem' }}>
+              Jó újra látni a Mentorstúdió felületén. Tervezd meg a mai napodat hatékonyan!
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <div style={{ background: 'rgba(3, 10, 6, 0.6)', border: '1px solid rgba(52, 211, 153, 0.25)', padding: '0.8rem 1.2rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <Clock size={24} color="#34d399" />
+              <div>
+                <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' }}>PONTOS IDŐ</span>
+                <span style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>
+                  {currentTime.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(3, 10, 6, 0.6)', border: '1px solid rgba(52, 211, 153, 0.25)', padding: '0.8rem 1.2rem', borderRadius: '14px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+              <CalendarIcon size={24} color="#34d399" />
+              <div>
+                <span style={{ display: 'block', fontSize: '0.7rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.5px' }}>MAI DÁTUM</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff' }}>
+                  {currentTime.toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' })}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {(user?.is_admin || user?.id === 1) && activeTab === 'editLanding' && (
           <div style={ui.glassCard} className="fade-in-up">
@@ -2137,7 +2273,7 @@ export default function App() {
         {(user?.is_admin || user?.id === 1) && activeTab === 'teachers' && (
           <div>
             <div style={ui.glassCard} className="fade-in-up">
-              <h3 style={ui.sectionTitle}><UserPlus size={20} color="#34d399"/> Új Tanár Regisztrálása (Admin)</h3>
+              <h3 style={ui.sectionTitle}><ShieldCheck size={20} color="#34d399"/> Új Tanár Hozzáadása (Admin)</h3>
               <form onSubmit={handleCreateTeacher} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
@@ -2160,146 +2296,158 @@ export default function App() {
                     <input type="text" value={newTeacher.phone} onChange={e => setNewTeacher({...newTeacher, phone: e.target.value})} style={ui.input} />
                   </div>
                   <div style={ui.inputGroup}>
-                    <label style={ui.label}>FŐ TANTÁRGY</label>
+                    <label style={ui.label}>SZAK / TANTÁRGY</label>
                     <input type="text" value={newTeacher.subject} onChange={e => setNewTeacher({...newTeacher, subject: e.target.value})} style={ui.input} required />
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div style={ui.inputGroup}>
-                    <label style={ui.label}>ALAPÉRTELMEZETT ÓRADÍJ (50 PERC, FT)</label>
+                    <label style={ui.label}>50 PERCES ÓRADÍJ (FT)</label>
                     <input type="number" value={newTeacher.hourly_rate_50} onChange={e => setNewTeacher({...newTeacher, hourly_rate_50: parseInt(e.target.value) || 0})} style={ui.input} required />
                   </div>
                   <div style={ui.inputGroup}>
-                    <label style={ui.label}>ALAPÉRTELMEZETT ÓRADÍJ (100 PERC, FT)</label>
+                    <label style={ui.label}>100 PERCES ÓRADÍJ (FT)</label>
                     <input type="number" value={newTeacher.hourly_rate_100} onChange={e => setNewTeacher({...newTeacher, hourly_rate_100: parseInt(e.target.value) || 0})} style={ui.input} required />
                   </div>
                 </div>
 
                 <div style={ui.inputGroup}>
-                  <label style={ui.label}>BEMUTATKOZÁS / BIO</label>
+                  <label style={ui.label}>BEMUTATKOZÁS (BIO)</label>
                   <textarea value={newTeacher.bio} onChange={e => setNewTeacher({...newTeacher, bio: e.target.value})} style={{ ...ui.input, height: '60px' }}></textarea>
                 </div>
 
                 <label style={ui.checkboxLabel}>
                   <input type="checkbox" checked={newTeacher.is_admin} onChange={e => setNewTeacher({...newTeacher, is_admin: e.target.checked})} style={ui.checkbox} />
-                  <span>Adminisztrátori jogkör megadása</span>
+                  <span>Adminisztrátori jogok megadása</span>
                 </label>
 
-                <button type="submit" style={ui.primaryBtn} className="btn-hover"><Plus size={18}/> Tanár Hozzáadása</button>
+                <button type="submit" style={ui.primaryBtn} className="btn-hover"><Plus size={18}/> Tanár Regisztrálása</button>
               </form>
             </div>
 
-            <h3 style={ui.sectionTitle}>Rendszerben Lévő Tanárok</h3>
+            <h3 style={ui.sectionTitle}>Tanárok Listája</h3>
             <div style={ui.gridGap}>
-              {teachers.map(t => (
-                <div key={t.id} style={ui.glassCard} className="card-hover">
-                  {editingTeacherId === t.id ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                      <h4 style={{ color: '#34d399', margin: 0 }}>Tanár Szerkesztése (#{t.id})</h4>
-                      
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>TELJES NÉV</label>
-                          <input type="text" value={editTeacherData.full_name} onChange={e => setEditTeacherData({ ...editTeacherData, full_name: e.target.value })} style={ui.input} />
+              {teachers.length === 0 ? (
+                <p style={ui.emptyText}>Még nincsenek regisztrált tanárok.</p>
+              ) : (
+                teachers.map(t => (
+                  <div key={t.id} style={ui.glassCard} className="card-hover">
+                    {editingTeacherId === t.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                        <h4 style={{ color: '#34d399', margin: 0 }}>Tanár Szerkesztése (#{t.id})</h4>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>TELJES NÉV</label>
+                            <input type="text" value={editTeacherData.full_name} onChange={e => setEditTeacherData({ ...editTeacherData, full_name: e.target.value })} style={ui.input} />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>E-MAIL</label>
+                            <input type="email" value={editTeacherData.email} onChange={e => setEditTeacherData({ ...editTeacherData, email: e.target.value })} style={ui.input} />
+                          </div>
                         </div>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>E-MAIL</label>
-                          <input type="email" value={editTeacherData.email} onChange={e => setEditTeacherData({ ...editTeacherData, email: e.target.value })} style={ui.input} />
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>TELEFON</label>
-                          <input type="text" value={editTeacherData.phone} onChange={e => setEditTeacherData({ ...editTeacherData, phone: e.target.value })} style={ui.input} />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>TELEFON</label>
+                            <input type="text" value={editTeacherData.phone} onChange={e => setEditTeacherData({ ...editTeacherData, phone: e.target.value })} style={ui.input} />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>SZAK</label>
+                            <input type="text" value={editTeacherData.subject} onChange={e => setEditTeacherData({ ...editTeacherData, subject: e.target.value })} style={ui.input} />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>ADMINISZTRÁTOR?</label>
+                            <select value={editTeacherData.is_admin ? 'true' : 'false'} onChange={e => setEditTeacherData({ ...editTeacherData, is_admin: e.target.value === 'true' })} style={ui.input}>
+                              <option value="false">Nem</option>
+                              <option value="true">Igen</option>
+                            </select>
+                          </div>
                         </div>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>TANTÁRGY</label>
-                          <input type="text" value={editTeacherData.subject} onChange={e => setEditTeacherData({ ...editTeacherData, subject: e.target.value })} style={ui.input} />
-                        </div>
-                        <div style={ui.inputGroup}>
-                          <label style={ui.label}>50P DÍJ (FT)</label>
-                          <input type="number" value={editTeacherData.hourly_rate_50} onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_50: parseInt(e.target.value) || 0 })} style={ui.input} />
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>50 PERCES DÍJ</label>
+                            <input type="number" value={editTeacherData.hourly_rate_50} onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_50: parseInt(e.target.value) || 0 })} style={ui.input} />
+                          </div>
+                          <div style={ui.inputGroup}>
+                            <label style={ui.label}>100 PERCES DÍJ</label>
+                            <input type="number" value={editTeacherData.hourly_rate_100} onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0 })} style={ui.input} />
+                          </div>
+                        </div>
+
                         <div style={ui.inputGroup}>
-                          <label style={ui.label}>100P DÍJ (FT)</label>
-                          <input type="number" value={editTeacherData.hourly_rate_100} onChange={e => setEditTeacherData({ ...editTeacherData, hourly_rate_100: parseInt(e.target.value) || 0 })} style={ui.input} />
+                          <label style={ui.label}>BIO</label>
+                          <textarea value={editTeacherData.bio} onChange={e => setEditTeacherData({ ...editTeacherData, bio: e.target.value })} style={{ ...ui.input, height: '60px' }} />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', marginTop: '1.2rem' }}>
-                          <label style={ui.checkboxLabel}>
-                            <input type="checkbox" checked={editTeacherData.is_admin} onChange={e => setEditTeacherData({ ...editTeacherData, is_admin: e.target.checked })} style={ui.checkbox} />
-                            <span>Admin Jog</span>
-                          </label>
-                        </div>
-                      </div>
 
-                      <div style={ui.inputGroup}>
-                        <label style={ui.label}>BIO</label>
-                        <textarea value={editTeacherData.bio} onChange={e => setEditTeacherData({ ...editTeacherData, bio: e.target.value })} style={{ ...ui.input, height: '60px' }} />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button onClick={() => handleSaveEditTeacher(t.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={16}/> Mentés</button>
-                        <button onClick={() => setEditingTeacherId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={16}/> Mégse</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={ui.cardHeaderRow}>
-                        <div>
-                          <h4 style={ui.cardTitle}>{t.full_name} {Boolean(t.is_admin) && <span style={ui.roleTag}>ADMIN</span>}</h4>
-                          <span style={{ color: '#34d399', fontSize: '0.85rem' }}>{t.email}</span>
-                        </div>
-                        <div>
-                          <button onClick={() => handleStartEditTeacher(t)} style={ui.editBtn} className="btn-hover"><Edit size={16}/></button>
-                          <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                          <button onClick={() => handleSaveEditTeacher(t.id)} style={ui.primaryBtnInline} className="btn-hover"><Save size={16}/> Mentés</button>
+                          <button onClick={() => setEditingTeacherId(null)} style={ui.secondaryBtnInline} className="btn-hover"><X size={16}/> Mégse</button>
                         </div>
                       </div>
+                    ) : (
+                      <>
+                        <div style={ui.cardHeaderRow}>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <h4 style={ui.cardTitle}>{t.full_name}</h4>
+                              {Boolean(t.is_admin) && <span style={ui.badge}><ShieldCheck size={12}/> Admin</span>}
+                            </div>
+                            <span style={{ color: '#34d399', fontSize: '0.85rem' }}>{t.email}</span>
+                          </div>
+                          <div>
+                            <button onClick={() => handleStartEditTeacher(t)} style={ui.editBtn} className="btn-hover"><Edit size={16}/></button>
+                            <button onClick={() => handleDeleteTeacher(t.id)} style={ui.deleteBtn} className="btn-hover"><Trash2 size={16}/></button>
+                          </div>
+                        </div>
 
-                      <p style={ui.cardDesc}><BookOpen size={16}/> Tantárgy: {t.subject || 'Nincs megadva'}</p>
-                      <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                        Alapértelmezett díjak: 50p: <strong>{t.hourly_rate_50 || 5000} Ft</strong> | 100p: <strong>{t.hourly_rate_100 || 9000} Ft</strong>
-                      </p>
-                    </>
-                  )}
-                </div>
-              ))}
+                        <p style={ui.cardDesc}><BookOpen size={16}/> Szak: {t.subject || 'Nincs megadva'}</p>
+                        <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+                          50 perc: {t.hourly_rate_50 || 5000} Ft | 100 perc: {t.hourly_rate_100 || 9000} Ft
+                        </p>
+                        {t.bio && <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '0.5rem' }}>{t.bio}</p>}
+                      </>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'messages' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', minHeight: '500px' }} className="fade-in-up">
+          <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem', minHeight: '550px' }}>
             <div style={ui.glassCard}>
-              <h4 style={{ color: '#34d399', marginBottom: '1rem', fontSize: '1rem', fontWeight: '800' }}>BESZÉLGETÉSEK</h4>
+              <h4 style={{ color: '#34d399', fontSize: '1rem', fontWeight: '800', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Users size={18}/> BESZÉLGETÉSEK
+              </h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {conversations.length === 0 ? (
-                  <p style={ui.emptyText}>Nincsenek elérhető kontaktok.</p>
+                  <p style={{ color: '#64748b', fontSize: '0.85rem' }}>Nincsenek elérhető beszélgetések.</p>
                 ) : (
-                  conversations.map(c => (
-                    <button 
-                      key={c.id} 
-                      onClick={() => setSelectedUser(c)} 
+                  conversations.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => setSelectedUser(u)}
                       style={{
-                        background: selectedUser?.id === c.id ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                        border: selectedUser?.id === c.id ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid transparent',
-                        padding: '0.8rem',
-                        borderRadius: '10px',
+                        background: selectedUser?.id === u.id ? 'rgba(52, 211, 153, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                        border: selectedUser?.id === u.id ? '1px solid rgba(52, 211, 153, 0.4)' : '1px solid rgba(255, 255, 255, 0.05)',
                         color: '#fff',
-                        textAlign: 'left',
+                        padding: '0.8rem 1rem',
+                        borderRadius: '12px',
                         cursor: 'pointer',
+                        textAlign: 'left',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '0.2rem'
+                        gap: '0.2rem',
+                        transition: 'all 0.2s'
                       }}
                       className="btn-hover"
                     >
-                      <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{c.full_name}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{c.role === 'teacher' ? 'Tanár' : 'Diák'}</span>
+                      <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{u.full_name}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{u.role === 'teacher' ? 'Tanár' : 'Diák'}</span>
                     </button>
                   ))
                 )}
@@ -2310,44 +2458,44 @@ export default function App() {
               {selectedUser ? (
                 <>
                   <div style={{ borderBottom: '1px solid rgba(52, 211, 153, 0.2)', paddingBottom: '0.8rem', marginBottom: '1rem' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>{selectedUser.full_name}</h3>
+                    <h4 style={{ color: '#fff', fontSize: '1.1rem', fontWeight: '700', margin: 0 }}>{selectedUser.full_name}</h4>
                     <span style={{ fontSize: '0.8rem', color: '#34d399' }}>{selectedUser.email}</span>
                   </div>
 
-                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingRight: '0.5rem', maxHeight: '400px' }}>
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingRight: '0.5rem', maxHeight: '380px' }}>
                     {messages.length === 0 ? (
-                      <p style={ui.emptyText}>Még nincsenek üzenetek ebben a beszélgetésben.</p>
+                      <p style={{ ...ui.emptyText, textAlign: 'center' }}>Még nincs üzenetváltás. Írj egy üzenetet!</p>
                     ) : (
                       messages.map(m => {
-                        const isOwn = m.sender_id === user.id;
+                        const isMe = m.sender_id === user?.id;
                         return (
                           <div 
                             key={m.id} 
-                            style={{
-                              alignSelf: isOwn ? 'flex-end' : 'flex-start',
+                            style={{ 
+                              alignSelf: isMe ? 'flex-end' : 'flex-start',
                               maxWidth: '70%',
-                              background: isOwn ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.08)',
-                              padding: '0.8rem 1rem',
-                              borderRadius: isOwn ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                              color: '#fff'
+                              background: isMe ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255, 255, 255, 0.08)',
+                              color: '#fff',
+                              padding: '0.8rem 1.1rem',
+                              borderRadius: isMe ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
+                              border: isMe ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                             }}
                           >
-                            <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>{m.content}</p>
+                            <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.4', wordBreak: 'break-word' }}>{m.content}</p>
                             
                             {m.file_url && (
-                              <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-                                <a 
-                                  href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  style={{ color: '#fff', textDecoration: 'underline', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                                >
-                                  <Paperclip size={14}/> Csatolt fájl megnyitása
-                                </a>
-                              </div>
+                              <a 
+                                href={m.file_url.startsWith('http') ? m.file_url : `${UPLOADS_BASE}${m.file_url}`} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: isMe ? '#a7f3d0' : '#34d399', fontSize: '0.8rem', marginTop: '0.5rem', textDecoration: 'underline' }}
+                              >
+                                <Paperclip size={14}/> Melléklet letöltése
+                              </a>
                             )}
 
-                            <span style={{ display: 'block', fontSize: '0.65rem', color: isOwn ? 'rgba(255,255,255,0.7)' : '#94a3b8', textAlign: 'right', marginTop: '0.3rem' }}>
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: isMe ? 'rgba(255,255,255,0.7)' : '#64748b', textAlign: 'right', marginTop: '0.3rem' }}>
                               {new Date(m.created_at).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
@@ -2356,34 +2504,35 @@ export default function App() {
                     )}
                   </div>
 
-                  <form onSubmit={handleSendMessage} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <form onSubmit={handleSendMessage} style={{ marginTop: '1rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <label style={{ cursor: 'pointer', color: '#34d399', padding: '0.6rem' }} title="Fájl csatolása">
+                      <Paperclip size={20} />
+                      <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                    </label>
+
                     {selectedFile && (
-                      <div style={{ fontSize: '0.8rem', color: '#34d399', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <Paperclip size={14}/> Kiválasztva: {selectedFile.name}
-                        <button type="button" onClick={() => setSelectedFile(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', marginLeft: 'auto' }}>✕</button>
-                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#a7f3d0', background: 'rgba(52,211,153,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                        {selectedFile.name.substring(0, 12)}...
+                      </span>
                     )}
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input 
-                        type="text" 
-                        placeholder="Írj üzenetet..." 
-                        value={newMessage} 
-                        onChange={e => setNewMessage(e.target.value)} 
-                        style={{ ...ui.input, flex: 1 }} 
-                      />
-                      <label style={{ ...ui.secondaryBtnInline, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Paperclip size={18}/>
-                        <input type="file" onChange={e => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
-                      </label>
-                      <button type="submit" style={ui.primaryBtnInline} className="btn-hover">
-                        <Send size={18}/>
-                      </button>
-                    </div>
+
+                    <input 
+                      type="text" 
+                      placeholder="Írj üzenetet..." 
+                      value={newMessage} 
+                      onChange={e => setNewMessage(e.target.value)} 
+                      style={{ ...ui.input, flex: 1 }} 
+                    />
+
+                    <button type="submit" style={ui.primaryBtnInline} className="btn-hover">
+                      <Send size={16}/> Küldés
+                    </button>
                   </form>
                 </>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
-                  Válassz egy beszélgetést a bal oldali sávból!
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+                  <MessageSquare size={48} color="#34d399" style={{ opacity: 0.5, marginBottom: '0.8rem' }} />
+                  <p>Válassz ki egy beszélgetést a bal oldali listából!</p>
                 </div>
               )}
             </div>
@@ -2391,7 +2540,9 @@ export default function App() {
         )}
 
         {activeTab === 'profile' && (
-          <Profile user={user} token={token} API_BASE={API_BASE} setUser={setUser} />
+          <div style={ui.glassCard} className="fade-in-up">
+            <Profile user={user} token={token} setUser={setUser} />
+          </div>
         )}
 
       </main>
