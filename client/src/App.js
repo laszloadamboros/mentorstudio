@@ -1506,8 +1506,8 @@ export default function App() {
             <p style={ui.heroSubtitle} className="fade-in">{landingData.subtitle}</p>
             <button 
               onClick={() => setShowLoginModal(true)} 
-              style={{ ...ui.primaryBtn, width: 'auto', padding: '0.95rem 2.5rem', fontSize: '0.95rem', marginLeft: 'auto', marginTop: 0 }} 
-className="btn-hover fade-in"
+              style={{ ...ui.primaryBtn, width: 'auto', padding: '0.95rem 2.5rem', fontSize: '0.95rem', marginTop: '2.5rem' }} 
+              className="btn-hover fade-in"
             >
               Belépés az Oktatási Rendszerbe <ArrowRight size={18}/>
             </button>
